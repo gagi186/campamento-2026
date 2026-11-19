@@ -284,19 +284,20 @@ function viewDep(sub){
 
 // ── búsqueda por persona ──
 function buildIndex(){
-  const idx = [];
+  const idx = [], DAY = id => D.programa.findIndex(d=>d.id===id);
+  const add = (dayId, h, txt, cat, t, s, go) => idx.push({d:DAY(dayId), h, txt, cat, t, s, go});
   D.programa.forEach(day=>{
-    day.items.forEach(it=>{ if (it.r) idx.push({txt:it.r, sec:'Programa · '+day.dia, t:it.a, s:[it.h, it.l].filter(Boolean).join(' · '), go:'programa/'+day.id}); });
-    if (day.notas) day.notas.lista.forEach(([t,r])=>idx.push({txt:r, sec:'Programa · '+day.dia, t, s:day.notas.titulo, go:'programa/'+day.id}));
+    day.items.forEach(it=>{ if (it.r) add(day.id, it.h, it.r, 'Programa', it.a, it.l, 'programa/'+day.id); });
+    if (day.notas) day.notas.lista.forEach(([t,r])=>add(day.id, day.notas.h||'', r, day.notas.titulo, t, '', 'programa/'+day.id));
   });
-  D.plenarias.estaciones.forEach(s=>idx.push({txt:s.r, sec:'Plenarias · sábado 14:00–18:00', t:'Estación '+s.n+': '+s.tema, s:s.lugar, go:'rally/plen'}));
-  D.comunion.actividades.forEach(x=>x.e.forEach(p=>idx.push({txt:p, sec:'Comunión.com · jue/vie/sáb 21:00', t:x.a, s:x.l, go:'com'})));
-  D.deportesJueves.actividades.forEach(x=>x.e.forEach(p=>idx.push({txt:p, sec:'Deportes · jueves 10:00', t:x.a, s:x.l, go:'dep/jue'})));
+  D.plenarias.estaciones.forEach(s=>add('sab', '14:00-18:00', s.r, 'Plenarias', 'Estación '+s.n+': '+s.tema, s.lugar, 'rally/plen'));
+  ['jue','vie','sab'].forEach(d=>D.comunion.actividades.forEach(x=>x.e.forEach(p=>add(d, '21:00-23:30', p, 'Comunión.com', x.a, x.l, 'com'))));
+  D.deportesJueves.actividades.forEach(x=>x.e.forEach(p=>add('jue', x.h||'10:00-12:00', p, 'Deportes', x.a, x.l, 'dep/jue')));
   D.deportesVS.actividades.forEach(x=>{
-    x.vie.forEach(p=>idx.push({txt:p, sec:'Deportes · viernes tarde', t:x.a, s:x.l, go:'dep/vie'}));
-    x.sab.forEach(p=>idx.push({txt:p, sec:'Deportes · sábado mañana', t:x.a, s:x.l, go:'dep/sab'}));
+    x.vie.forEach(p=>add('vie', x.hv||'15:00-18:00', p, 'Deportes', x.a, x.l, 'dep/vie'));
+    x.sab.forEach(p=>add('sab', x.hs||'9:00-12:45', p, 'Deportes', x.a, x.l, 'dep/sab'));
   });
-  idx.forEach(e=>e.n = norm(e.txt));
+  idx.forEach(e=>{ e.n = norm(e.txt); e.m = range(e.h)[0] ?? 0; });
   return idx;
 }
 let INDEX = null;
@@ -313,10 +314,18 @@ function runSearch(q){
   const hits = INDEX.filter(e => toks.every(t => e.n.includes(t)));
   if (!hits.length){ el.innerHTML = `<div class="empty">No se encontró “${esc(q)}”.</div>`; return; }
   const seen = new Set(), out = [];
-  hits.forEach(h=>{ const k = h.sec+'|'+h.t+'|'+h.txt; if (!seen.has(k)){ seen.add(k); out.push(h); } });
-  el.innerHTML = `<p class="meta">${out.length} resultado${out.length>1?'s':''}</p><div class="list">${out.map(h=>`<div class="item" style="grid-template-columns:1fr"><div>
-    <div class="res-sec">${esc(h.sec)}</div><div class="act">${esc(h.t)}</div>${h.s?`<div class="meta">${esc(h.s)}</div>`:''}${whoLine(h.txt)}
-    <button class="link" data-go="${h.go}">Abrir →</button></div></div>`).join('')}</div>`;
+  hits.forEach(h=>{ const k = h.d+'|'+h.h+'|'+h.t+'|'+h.txt; if (!seen.has(k)){ seen.add(k); out.push(h); } });
+  out.sort((a,b)=>(a.d-b.d) || (a.m-b.m) || a.t.localeCompare(b.t,'es'));
+  const cur = currentDay(), curI = cur ? D.programa.indexOf(cur) : -1;
+  let html = `<p class="meta">${out.length} responsabilidad${out.length>1?'es':''}, ordenadas por día y hora</p>`;
+  D.programa.forEach((day,di)=>{
+    const rows = out.filter(h=>h.d===di); if (!rows.length) return;
+    html += `<h3>${esc(day.dia)} ${esc(day.fechaTxt)}${di===curI?' · hoy':''}</h3><div class="list">${rows.map(h=>`<div class="item">
+      <div class="time">${esc(h.h)}</div><div>
+      <div class="res-sec">${esc(h.cat)}</div><div class="act">${esc(h.t)}</div>${h.s?`<div class="meta">${esc(h.s)}</div>`:''}${whoLine(h.txt)}
+      <button class="link" data-go="${h.go}">Abrir →</button></div></div>`).join('')}</div>`;
+  });
+  el.innerHTML = html;
 }
 
 // ── router ──

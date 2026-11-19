@@ -19,7 +19,7 @@ window.DATA = {
         { h: '20:00', l: 'Campo de fútbol', a: 'Ensayo drama y fogata', r: 'Joel / Salomón', d: 'Pedimos que estén todos para apoyar.' }
       ],
       notas: {
-        titulo: 'Tareas de preparación (15:00)',
+        titulo: 'Tareas de preparación (15:00)', h: '15:00',
         lista: [
           ['Enumerar camas, rotulación de cabañas y áreas específicas', 'Marvin y Marjorie Hernández'],
           ['Preparar lugar para tienda y detalles', 'Fredy y Nora Castellanos'],
@@ -52,7 +52,7 @@ window.DATA = {
         { h: '23:30', l: 'Cabañas', a: 'Dormir', r: 'Comité y monitores', d: 'Monitores asegurarse que el grupo esté completo.' }
       ],
       notas: {
-        titulo: 'Recibimiento de jóvenes',
+        titulo: 'Recibimiento de jóvenes', h: '7:00-11:00',
         lista: [
           ['Bienvenida', 'Hnos. Weslye y Carlos', 'Dan la bienvenida, corroboran el nombre y los mandan en fila al área de registro para recoger playera y gafete. Mientras están en la cola, explicarles que lleven sus cosas y regresen al comedor a desayunar. ¡No se deben quedar en las cabañas!'],
           ['Inscripción y pago', 'Joel García con Hna. Keren', 'Área de caja, para recibir pagos.'],
@@ -204,7 +204,7 @@ window.DATA = {
       { a: 'Kayaks', l: 'Laguna grande', e: ['Obed Hidalgo', 'Juan Pablo Herrera', 'Manuel Díaz'], o: '' },
       { a: 'Croquet / Bocce', l: 'Grama frente al auditorium', e: ['Rebequita Hernández', 'Nataly González'], o: '' },
       { a: 'Football', l: 'Calle que va al taller, cerca de los dormitorios del staff', e: ['Hno. Chesco', 'José Carlos Martínez'], o: 'Al llegar a Tierra Alta se definirá si es posible jugar allí. En caso sí, se habilitará para esa hora.' },
-      { a: 'Ayuda en desayuno', l: 'Comedor', e: ['Alfredo Castellanos', 'Alin Castellanos', 'Manuel Díaz', 'José Carlos Martínez'], o: '' }
+      { a: 'Ayuda en desayuno', h: '8:00-10:00', l: 'Comedor', e: ['Alfredo Castellanos', 'Alin Castellanos', 'Manuel Díaz', 'José Carlos Martínez'], o: '' }
     ]
   },
 
@@ -223,18 +223,18 @@ window.DATA = {
       { a: 'Futillo', l: 'Auditorium', vie: ['Ana Cristina Martínez', 'Nataly González'], sab: ['Ana Cristina Martínez', 'Nataly González'], o: '', st: true },
       { a: 'Ping-Pong', l: 'Auditorium', vie: ['Hna. Rebequita Hernández'], sab: ['Hna. Rebequita Hernández'], o: '' },
       { a: 'Kayaks', l: 'Laguna grande', vie: ['Obed Hidalgo', 'Tefo Figueroa', 'Gerson Ajcot'], sab: ['Tefo Figueroa', 'Juanpa Herrera', 'Anna Michelle Morales'], o: 'Al terminar, vaciar el agua y dejarlos boca arriba en la grama para secar.', st: true },
-      { a: 'Piscinas · hombres', l: 'Área de piscinas', vie: ['Hno. Mario Enríquez', 'Hno. Marvin Hernández', 'Hno. Israel Garache'], sab: ['Hno. Marvin Hernández', 'Hno. Carlos Martínez', 'Hno. Juan Carlos Morales', 'Hno. Israel Garache'], o: '' },
-      { a: 'Piscinas · mujeres', l: 'Área de piscinas', vie: ['Hna. Lucy Enríquez', 'Hna. Eunice Garache', 'Hna. Edna Martínez', 'Hna. Sheny Quiché'], sab: ['Hna. Lucy Enríquez', 'Hna. Eunice Garache', 'Hna. Edna Martínez', 'Hna. Sheny Quiché'], o: '' },
-      { a: 'Tobogán · hombres', l: 'Área de piscinas', vie: ['Hno. Mario Enríquez', 'Hno. Marvin Hernández'], sab: ['Hno. Mario Enríquez', 'Hno. Marvin Hernández'], o: 'Pedir los chalecos en la bodega de Tierra Alta; todos los que se tiren deben usarlo.', st: true },
-      { a: 'Tobogán · mujeres', l: 'Área de piscinas', vie: ['Hna. Lucy Enríquez', 'Hna. Eunice Garache'], sab: ['Hna. Lucy Enríquez', 'Hna. Eunice Garache'], o: 'Pedir los chalecos en la bodega de Tierra Alta; todos los que se tiren deben usarlo.', st: true },
+      { a: 'Piscinas · hombres', hv: '16:45-18:15', hs: '9:00-10:45', l: 'Área de piscinas', vie: ['Hno. Mario Enríquez', 'Hno. Marvin Hernández', 'Hno. Israel Garache'], sab: ['Hno. Marvin Hernández', 'Hno. Carlos Martínez', 'Hno. Juan Carlos Morales', 'Hno. Israel Garache'], o: '' },
+      { a: 'Piscinas · mujeres', hv: '15:00-16:45', hs: '10:45-12:30', l: 'Área de piscinas', vie: ['Hna. Lucy Enríquez', 'Hna. Eunice Garache', 'Hna. Edna Martínez', 'Hna. Sheny Quiché'], sab: ['Hna. Lucy Enríquez', 'Hna. Eunice Garache', 'Hna. Edna Martínez', 'Hna. Sheny Quiché'], o: '' },
+      { a: 'Tobogán · hombres', hv: '15:00-16:45', hs: '10:45-12:30', l: 'Área de piscinas', vie: ['Hno. Mario Enríquez', 'Hno. Marvin Hernández'], sab: ['Hno. Mario Enríquez', 'Hno. Marvin Hernández'], o: 'Pedir los chalecos en la bodega de Tierra Alta; todos los que se tiren deben usarlo.', st: true },
+      { a: 'Tobogán · mujeres', hv: '16:45-18:15', hs: '9:00-10:45', l: 'Área de piscinas', vie: ['Hna. Lucy Enríquez', 'Hna. Eunice Garache'], sab: ['Hna. Lucy Enríquez', 'Hna. Eunice Garache'], o: 'Pedir los chalecos en la bodega de Tierra Alta; todos los que se tiren deben usarlo.', st: true },
       { a: 'Transporte a piscinas', l: '', vie: ['Chesco Hernández'], sab: ['Chesco Hernández'], o: '' },
-      { a: 'Caminata', l: 'Montaña (mirador)', vie: ['Joel García', 'Hno. Alfredo Castellanos', 'Mitch Morales (lleva stickers pasaporte cima)', 'Salomón Rivera', 'Carlos Martínez', 'Jimmy Mejía (en carro con hielera y aguas)'], sab: ['Joel García', 'Hno. Alfredo Castellanos', 'Rita Samayoa (lleva stickers pasaporte cima)', 'Salomón Rivera', 'Mario Enríquez', 'Jimmy Mejía (en carro con hielera y aguas)'], o: '', st: true },
+      { a: 'Caminata', hv: '15:00-17:30', hs: '9:00-12:00', l: 'Montaña (mirador)', vie: ['Joel García', 'Hno. Alfredo Castellanos', 'Mitch Morales (lleva stickers pasaporte cima)', 'Salomón Rivera', 'Carlos Martínez', 'Jimmy Mejía (en carro con hielera y aguas)'], sab: ['Joel García', 'Hno. Alfredo Castellanos', 'Rita Samayoa (lleva stickers pasaporte cima)', 'Salomón Rivera', 'Mario Enríquez', 'Jimmy Mejía (en carro con hielera y aguas)'], o: '', st: true },
       { a: 'Supervisión general en todas las áreas', l: '', vie: ['Hno. Wesley Salguero', 'Hna. Keren Salguero', 'Juan Carlos Morales', 'Regina Morales'], sab: ['Hno. Wesley Salguero', 'Hna. Keren Salguero', 'Juan Carlos Morales', 'Regina Morales'], o: '' },
       { a: 'Tienda', l: 'Entrada del auditorium', vie: ['Hno. Freddy Castellanos', 'Hna. Norita Castellanos', 'Heidy Chanchavac'], sab: ['Hno. Freddy Castellanos', 'Hna. Norita Castellanos', 'Heidy Chanchavac'], o: '' },
       { a: 'Primeros auxilios', l: 'Auditorium', vie: ['Hna. Keren Salguero', 'Hno. Fidel'], sab: ['Hna. Keren Salguero', 'Hno. Fidel'], o: '' },
       { a: 'Mesa de migración (llenar pasaportes)', l: 'Auditorium, cerca de primeros auxilios', vie: ['Gaby Rodríguez', 'Hna. Alin Castellanos'], sab: ['Gaby Rodríguez', 'Hna. Alin Castellanos'], o: 'Recoger stickers / sellos de todo.' },
-      { a: 'Hora de descanso · hombres (solo viernes 5-6 pm)', l: 'Dormitorios varones', vie: ['Isaías Chanchavac', 'Manuel Díaz'], sab: [], o: '' },
-      { a: 'Hora de descanso · mujeres (solo viernes 5-6 pm)', l: 'Dormitorios mujeres', vie: ['Raquel Morales', 'Heidy Chanchavac'], sab: [], o: '' },
+      { a: 'Hora de descanso · hombres (solo viernes 5-6 pm)', hv: '17:00-18:00', l: 'Dormitorios varones', vie: ['Isaías Chanchavac', 'Manuel Díaz'], sab: [], o: '' },
+      { a: 'Hora de descanso · mujeres (solo viernes 5-6 pm)', hv: '17:00-18:00', l: 'Dormitorios mujeres', vie: ['Raquel Morales', 'Heidy Chanchavac'], sab: [], o: '' },
       { a: 'Preparación del suero', l: '', vie: ['Raquel Morales', 'Hna. Marjorie Hernández'], sab: [], o: 'Preparar con antelación el suero y verificar que esté lleno y frío.' }
     ]
   }
