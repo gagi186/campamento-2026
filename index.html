@@ -297,7 +297,7 @@ function buildIndex(){
     x.vie.forEach(p=>add('vie', x.hv||'15:00-18:00', p, 'Deportes', x.a, x.l, 'dep/vie'));
     x.sab.forEach(p=>add('sab', x.hs||'9:00-12:45', p, 'Deportes', x.a, x.l, 'dep/sab'));
   });
-  idx.forEach(e=>{ e.n = norm(e.txt); e.m = range(e.h)[0] ?? 0; });
+  idx.forEach(e=>{ const r = range(e.h); e.n = norm(e.txt); e.m = r[0] ?? 0; e.f = r[1] ?? 0; });
   return idx;
 }
 let INDEX = null;
@@ -315,7 +315,7 @@ function runSearch(q){
   if (!hits.length){ el.innerHTML = `<div class="empty">No se encontró “${esc(q)}”.</div>`; return; }
   const seen = new Set(), out = [];
   hits.forEach(h=>{ const k = h.d+'|'+h.h+'|'+h.t+'|'+h.txt; if (!seen.has(k)){ seen.add(k); out.push(h); } });
-  out.sort((a,b)=>(a.d-b.d) || (a.m-b.m) || a.t.localeCompare(b.t,'es'));
+  out.sort((a,b)=>(a.d-b.d) || (a.m-b.m) || (a.f-b.f) || a.t.localeCompare(b.t,'es'));
   const cur = currentDay(), curI = cur ? D.programa.indexOf(cur) : -1;
   let html = `<p class="meta">${out.length} responsabilidad${out.length>1?'es':''}, ordenadas por día y hora</p>`;
   D.programa.forEach((day,di)=>{
