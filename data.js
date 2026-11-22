@@ -243,7 +243,7 @@ window.DATA = {
   // Fuente: "Solicitud de hospedaje - Domingo" (varones y mujeres) cruzada con "Hostales día domingo".
   // Cada persona: [id, nombre, H/M, hostal, nota]. El id NO debe cambiar (se usa en los códigos que se comparten entre celulares).
   hospedaje: {
-    hostales: ['Los Lagos', 'Ixbalanque', 'Colibrí', 'Pendiente', 'Solo bus'],
+    hostales: ['Los Lagos', 'Ixbalanque', 'Colibrí', 'Pendiente'],
     // Lugares libres en la hoja de hostales (Los Lagos: filas 12, 13 y 18 vacías).
     libres: { 'Los Lagos': 3 },
     // Pendientes: se ven en otro color con un "!" para leer el detalle y la sugerencia.
@@ -297,7 +297,7 @@ window.DATA = {
       ['m23', 'Javiera Elizabeth Blandón Ortiz', 'M', 'Ixbalanque'],
       ['m24', 'Jessica Eliana González Andrade', 'M', 'Ixbalanque'],
       ['m25', 'Ana Meneses Rodríguez', 'M', 'Ixbalanque'],
-      ['m26', 'Ana Paz Estrada Rosales', 'M', 'Ixbalanque', 'Confirmada para el bus'],
+      ['m26', 'Ana Paz Estrada Rosales', 'M', 'Ixbalanque'],
       ['m27', 'Karen Daniela Londoño Ospina', 'M', 'Ixbalanque'],
       ['m28', 'Grace Muñoz', 'M', 'Ixbalanque'],
       ['m29', 'Elizabeth Hernández', 'M', 'Ixbalanque'],
@@ -305,7 +305,7 @@ window.DATA = {
       ['m31', 'Leslie Dayanna Naula', 'M', 'Ixbalanque'],
       ['m32', 'Icela Jael Poveda', 'M', 'Ixbalanque'],
       ['m33', 'Cesia Abigail Villalobos', 'M', 'Ixbalanque'],
-      ['m90', 'Susana Ángeles', 'M', 'Ixbalanque', 'Confirmada para el bus'],
+      ['m90', 'Susana Angeles', 'M', 'Ixbalanque'],
       ['m91', 'Cory Carrasco', 'M', 'Ixbalanque'],
       // Hostal Colibrí — varones
       ['h02', 'Abner Abraham Maravilla', 'H', 'Colibrí'],
@@ -330,14 +330,7 @@ window.DATA = {
       ['h31', 'Samuel Josué López Castañeda', 'H', 'Colibrí'],
       ['h32', 'Saúl López', 'H', 'Colibrí'],
       // Pidió hospedaje pero todavía no tiene hostal
-      ['h16', 'Emmanuel Josmar Ángeles Acosta', 'H', 'Pendiente'],
-      // Se suben al bus pero no tienen hospedaje en la lista
-      ['b01', 'Sara Villagrán', 'M', 'Solo bus', 'Se agregó al bus'],
-      ['b02', 'Tamara Cabrera', 'M', 'Solo bus', 'Se agregó al bus']
-    ],
-    // Personas que NO van en el bus (se muestran tachadas y no cuentan como faltantes).
-    noVan: [
-      ['n01', 'Amiris Suazo', 'No va en el bus']
+      ['h16', 'Emmanuel Josmar Ángeles Acosta', 'H', 'Pendiente']
     ]
   }
 };
