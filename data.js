@@ -237,5 +237,88 @@ window.DATA = {
       { a: 'Hora de descanso · mujeres (solo viernes 5-6 pm)', hv: '17:00-18:00', l: 'Dormitorios mujeres', vie: ['Raquel Morales', 'Heidy Chanchavac'], sab: [], o: '' },
       { a: 'Preparación del suero', l: '', vie: ['Raquel Morales', 'Hna. Marjorie Hernández'], sab: [], o: 'Preparar con antelación el suero y verificar que esté lleno y frío.' }
     ]
+  },
+
+  // ───────────── HOSPEDAJE DOMINGO Y ABORDAJE DE AUTOBUSES ─────────────
+  // Fuente: "Solicitud de hospedaje - Domingo" (varones y mujeres) cruzada con "Hostales día domingo".
+  // Cada persona: [id, nombre, H/M, hostal, nota]. El id NO debe cambiar (se usa en los códigos que se comparten entre celulares).
+  hospedaje: {
+    hostales: ['Los Lagos', 'Ixbalanque', 'Colibrí', 'Sin hostal'],
+    personas: [
+      // Hostal Los Lagos — varones
+      ['h01', 'Abie Nuñez', 'H', 'Los Lagos'],
+      ['h03', 'Abraham Darío Tamez García', 'H', 'Los Lagos'],
+      ['h05', 'Avner Guajardo', 'H', 'Los Lagos'],
+      ['h06', 'Avraham Guajardo', 'H', 'Los Lagos'],
+      ['h11', 'David Alejandro González Tapia', 'H', 'Los Lagos'],
+      ['h12', 'Diego Fernando Vaca Altamirano', 'H', 'Los Lagos'],
+      ['h14', 'Emanuel Reyna', 'H', 'Los Lagos'],
+      ['h20', 'Israel Garache', 'H', 'Los Lagos', 'Ayuda'],
+      ['h23', 'José Nava', 'H', 'Los Lagos'],
+      ['h24', 'Juan Andrés Ordóñez Bustamante', 'H', 'Los Lagos'],
+      ['h33', 'Timoteo Ordóñez', 'H', 'Los Lagos'],
+      ['h34', 'Urías Natán Tamez García', 'H', 'Los Lagos'],
+      // Hostal Los Lagos — mujeres
+      ['m02', 'Raquel Morales', 'M', 'Los Lagos', 'Ayuda'],
+      ['m14', 'Jael Sánchez Ramos', 'M', 'Los Lagos'],
+      ['m17', 'Amiel Cruz Pérez', 'M', 'Los Lagos', 'En la lista a mano no tenía Los Lagos'],
+      // Hostal Ixbalanque — mujeres
+      ['m01', 'Eunice de Garache', 'M', 'Ixbalanque', 'Ayuda'],
+      ['m03', 'Jazmín Aguilar', 'M', 'Ixbalanque'],
+      ['m04', 'Alfa Ruth Ortiz Muñiz', 'M', 'Ixbalanque'],
+      ['m05', 'Analí Guajardo', 'M', 'Ixbalanque'],
+      ['m06', 'Esther Abiu Navarro Sánchez', 'M', 'Ixbalanque'],
+      ['m07', 'Emely Sales', 'M', 'Ixbalanque'],
+      ['m08', 'Lizette Pecina', 'M', 'Ixbalanque'],
+      ['m09', 'Susana Azpilcueta', 'M', 'Ixbalanque'],
+      ['m10', 'Sarah Yanet Martínez Alvarado', 'M', 'Ixbalanque'],
+      ['m11', 'Mariana Ramírez Panamá', 'M', 'Ixbalanque'],
+      ['m12', 'Abigail Ramírez Panamá', 'M', 'Ixbalanque'],
+      ['m13', 'Janet Melanie Pitalua Sánchez', 'M', 'Ixbalanque', 'En la lista a mano decía Los Lagos'],
+      ['m15', 'Angelly Mosel Garza Maldonado', 'M', 'Ixbalanque'],
+      ['m16', 'Hannah Lizeth Martínez', 'M', 'Ixbalanque'],
+      ['m18', 'Zurisaday González González', 'M', 'Ixbalanque'],
+      ['m19', 'Alyssa Meléndez', 'M', 'Ixbalanque'],
+      ['m20', 'Paulina González', 'M', 'Ixbalanque'],
+      ['m21', 'Rebeca Alonzo Rodríguez', 'M', 'Ixbalanque'],
+      ['m22', 'Keren Elizabeth Juárez Landero', 'M', 'Ixbalanque'],
+      ['m23', 'Javiera Elizabeth Blandón Ortiz', 'M', 'Ixbalanque'],
+      ['m24', 'Jessica Eliana González Andrade', 'M', 'Ixbalanque'],
+      ['m25', 'Ana Meneses Rodríguez', 'M', 'Ixbalanque'],
+      ['m26', 'Ana Paz Estrada Rosales', 'M', 'Ixbalanque'],
+      ['m27', 'Karen Daniela Londoño Ospina', 'M', 'Ixbalanque'],
+      ['m28', 'Grace Muñoz', 'M', 'Ixbalanque'],
+      ['m29', 'Elizabeth Hernández', 'M', 'Ixbalanque'],
+      ['m30', 'Cesia Melgar', 'M', 'Ixbalanque'],
+      ['m31', 'Leslie Dayanna Naula', 'M', 'Ixbalanque'],
+      ['m32', 'Icela Jael Poveda', 'M', 'Ixbalanque'],
+      ['m33', 'Cesia Abigail Villalobos', 'M', 'Ixbalanque'],
+      ['m90', 'Susana Angeles', 'M', 'Ixbalanque', 'No estaba en la solicitud'],
+      ['m91', 'Cory Carrasco', 'M', 'Ixbalanque', 'No estaba en la solicitud'],
+      // Hostal Colibrí — varones
+      ['h02', 'Abner Abraham Maravilla', 'H', 'Colibrí'],
+      ['h04', 'Alex Aguilar', 'H', 'Colibrí'],
+      ['h07', 'Christopher Cifuentes', 'H', 'Colibrí'],
+      ['h08', 'Daniel Josaphat Saravia', 'H', 'Colibrí'],
+      ['h09', 'Daniel Mauricio Quintanilla', 'H', 'Colibrí'],
+      ['h10', 'Daniel Yejallel Falcón Solís', 'H', 'Colibrí'],
+      ['h13', 'Eduardo Vinicio Mayorga Mayorga', 'H', 'Colibrí'],
+      ['h15', 'Emmanuel Ávila', 'H', 'Colibrí'],
+      ['h17', 'Ezri Haniel Falcón Solís', 'H', 'Colibrí'],
+      ['h18', 'Héctor Maravilla', 'H', 'Colibrí'],
+      ['h19', 'Israel Elías Ortiz Muñiz', 'H', 'Colibrí'],
+      ['h21', 'Iván Ávila', 'H', 'Colibrí'],
+      ['h22', 'Jabes Judá Cortés Mendoza', 'H', 'Colibrí'],
+      ['h25', 'Judá Gerson Gallegos Acosta', 'H', 'Colibrí'],
+      ['h26', 'Kelby García', 'H', 'Colibrí'],
+      ['h27', 'Levy Saravia', 'H', 'Colibrí'],
+      ['h28', 'Luis Diego Mendoza', 'H', 'Colibrí'],
+      ['h29', 'Marvin Antonio Rodríguez Villeda', 'H', 'Colibrí'],
+      ['h30', 'Samuel Bordallo González', 'H', 'Colibrí'],
+      ['h31', 'Samuel Josué López Castañeda', 'H', 'Colibrí'],
+      ['h32', 'Saúl López', 'H', 'Colibrí'],
+      // Pidió hospedaje pero no aparece en ningún hostal
+      ['h16', 'Emmanuel Josmar Ángeles Acosta', 'H', 'Sin hostal', 'Pidió hospedaje y no aparece en ningún hostal']
+    ]
   }
 };

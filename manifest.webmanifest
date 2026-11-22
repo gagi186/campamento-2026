@@ -1,7 +1,7 @@
 {
   "name": "Campamento 2026 · Tiempo de conquistar",
   "short_name": "Campamento",
-  "description": "Programa, rally, comunión.com, deportes y responsables del campamento.",
+  "description": "Programa, rally, comunión.com, deportes, responsables y abordaje de autobuses del campamento.",
   "lang": "es",
   "start_url": "./index.html",
   "scope": "./",
