@@ -459,7 +459,7 @@ function busList(){
     const pb = busOf(p.id,R,E), here = R[p.id] && R[p.id].b === b;
     const cls = pb ? (here ? 'on' : 'other') : '', pd = PEND[p.id];
     return `<div class="sw"><div class="bg"><span>✓ Subió${b?' · bus '+esc(b):''}</span><span>Quitar ↩</span></div><button class="prow ${cls} ${pd?'pend':''} ${busAsk===p.id?'ask':''}" data-pid="${esc(p.id)}"><span class="box">${CHECK}</span>
-      <span class="nm"><b>${esc(p.n)}</b><small>${esc(p.h)}${p.o?' · <i>'+esc(p.o)+'</i>':''}${busAsk===p.id?' · <i>Toca otra vez para pasarlo al bus '+esc(b)+'</i>':''}</small>
+      <span class="nm"><b>${esc(p.n)}</b><small>${esc(p.h)}${p.o?' · <i>'+esc(p.o)+'</i>':''}${busAsk===p.id?' · <i>Desliza otra vez → para pasarlo al bus '+esc(b)+'</i>':''}</small>
       ${pd && busOpen.has(p.id)?`<span class="pdet">${esc(pd.motivo)}${pd.sugerencia?`<em>Sugerencia: ${esc(pd.sugerencia)}</em>`:''}</span>`:''}</span>
       ${pb?`<span class="busb ${here?'':'other'}">Bus ${esc(pb)}</span>`:''}
       ${pd?`<span class="info" data-info="${esc(p.id)}" role="button" aria-label="Ver detalle">!</span>`:''}</button></div>`;
@@ -634,7 +634,7 @@ $app.addEventListener('click', e=>{
   if (ds.team){ store.set('team', ds.team === store.get('team','') ? '' : ds.team); return route(); }
   if (ds.ronda){ store.set('ronda', ds.ronda); return route(); }
   if (ds.est){ store.set('estacion', ds.est); return route(); }
-  if (ds.pid){ if (Date.now() - swBlockClick < 400) return; return busToggle(ds.pid); }
+  if (ds.pid){ if (Date.now() - swBlockClick < 400) return; return toast('Desliza → para marcar · ← para quitar'); }
   if (ds.bmode) return go('bus/' + ds.bmode);
   if (ds.bf){ store.set('bus.f', ds.bf); return route(); }
   if ('bh' in ds){ store.set('bus.h', ds.bh); return route(); }
