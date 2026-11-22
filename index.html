@@ -410,7 +410,7 @@ function toast(msg){
 function viewBus(sub){
   const mode = sub === 'resumen' ? 'resumen' : 'lista';
   const b = myBus();
-  let html = `<h2>Abordaje de autobuses</h2>`;
+  let html = `<h2>Bus de hospedaje · domingo</h2><p class="meta" style="margin-top:-6px">Solo para quienes se quedan en hostal el domingo (Los Lagos, Ixbalanque y Colibrí).</p>`;
   html += `<div class="card buscfg ${b?'':'unset'}"><div class="lbl">Este celular registra el bus<small>${b ? 'Cada palomita queda en el bus ' + esc(b) + '.' : 'Escribe el número de tu bus para empezar.'}</small></div>
     <div class="stepper"><button data-bact="minus" aria-label="Bus anterior">−</button><input id="busNum" inputmode="numeric" value="${esc(b)}" placeholder="#" maxlength="3" aria-label="Número de bus"><button data-bact="plus" aria-label="Bus siguiente">+</button></div></div>`;
   html += `<div class="stats" id="busStats"></div>`;
