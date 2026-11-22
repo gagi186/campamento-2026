@@ -104,7 +104,9 @@ details.card summary{cursor:pointer;font-weight:600}
 .stepper input{width:64px;height:42px;text-align:center;font:700 1.4rem system-ui;border-radius:12px;border:2px solid var(--brand);background:var(--card);color:var(--ink)}
 .buscfg.unset .stepper input{border-color:var(--accent)}
 .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
-.stats div{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:8px;text-align:center}
+.stats div,.stats button{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:8px;text-align:center;cursor:pointer}
+.stats button.sel{border:2px solid var(--brand)}
+.stats button.warn.sel{border-color:var(--accent)}
 .stats b{display:block;font-size:1.35rem;color:var(--brand);font-variant-numeric:tabular-nums}
 .stats span{font-size:.74rem;color:var(--muted)}
 .stats .warn b{color:var(--accent)}
@@ -521,7 +523,9 @@ function busStats(){
   const bl = Object.keys(by).sort((x,y)=>x.localeCompare(y,'es',{numeric:true}));
   const tb = document.getElementById('busTot');
   if (tb) tb.innerHTML = bl.length ? bl.map(bn=>`<button data-bmode="resumen" class="${bn===b?'on':''}">Bus ${esc(bn)}: <b>${by[bn]}</b></button>`).join('') + `<button data-bmode="resumen">Sin bus: <b>${P.length-up}</b></button>` : '';
-  if (el) el.innerHTML = `<div><b>${b?mine:'–'}</b><span>En mi bus${b?' ('+esc(b)+')':''}</span></div><div><b>${up}/${P.length}</b><span>Ya subieron</span></div><div class="${P.length-up?'warn':''}"><b>${P.length-up}</b><span>Faltan</span></div>`;
+  const f = store.get('bus.f','faltan'), lv = !location.hash.includes('resumen');
+  const on = k => lv && f === k ? ' sel' : '';
+  if (el) el.innerHTML = `<button data-bfgo="mio" class="${on('mio')}"><b>${b?mine:'–'}</b><span>En mi bus${b?' ('+esc(b)+')':''}</span></button><button data-bfgo="todos" class="${on('todos')}"><b>${up}/${P.length}</b><span>Ya subieron</span></button><button data-bfgo="faltan" class="${P.length-up?'warn':''}${on('faltan')}"><b>${P.length-up}</b><span>Faltan ›</span></button>`;
 }
 function busList(){
   const el = document.getElementById('busList'); if (!el) return;
@@ -699,6 +703,17 @@ function busResumen(){
   const buses = Object.keys(by).sort((a,b)=>a.localeCompare(b,'es',{numeric:true}));
   let html = `<div class="card"><b>¿No ves algún bus?</b><div class="meta" style="margin-top:4px">Con internet, los buses se juntan solos cada pocos segundos. Si un celular no tiene señal, su encargado puede tocar <b>“Compartir lista de mi bus”</b> y mandártela por WhatsApp; tú copias el mensaje y tocas aquí:</div><div class="actions" style="margin:10px 0 0"><button data-bact="paste">📋 Pegar e importar lista copiada</button></div></div>`;
   html += busTotals();
+  {
+    const P = busPeople(), R = recs(), E = exts();
+    const fal = P.filter(p=>!busOf(p.id,R,E));
+    if (fal.length){
+      html += `<h3 style="color:var(--accent)">Faltan · ${fal.length}</h3>`;
+      HOS.hostales.forEach(h=>{
+        const L = fal.filter(p=>p.h===h).sort((x,y)=>x.n.localeCompare(y.n,'es')); if (!L.length) return;
+        html += `<div class="list"><div class="item" style="grid-template-columns:1fr;padding:8px 12px;background:var(--soft2)"><b>${esc(h)} · ${L.length}</b></div>${L.map(p=>`<div class="item" style="grid-template-columns:1fr;padding:8px 12px"><div>${esc(p.n)}${PEND[p.id]?' <span class="busb other">pendiente</span>':''}</div></div>`).join('')}</div>`;
+      });
+    } else html += `<div class="empty">¡Ya subieron todos! 🎉</div>`;
+  }
   const pk = Object.keys(PEND).filter(id=>P.some(p=>p.id===id));
   if (pk.length) html += `<h3 style="color:var(--accent)">Pendientes · ${pk.length}</h3><div class="list">${pk.map(id=>{ const p = P.find(x=>x.id===id), pd = PEND[id], pb = busOf(id,R,E);
     return `<div class="item" style="grid-template-columns:1fr;background:var(--soft2);box-shadow:inset 4px 0 0 var(--accent)"><div><div class="act">⚠ ${esc(p.n)}${pb?` <span class="busb">Bus ${esc(pb)}</span>`:''}</div><div class="meta">${esc(p.h)}</div><div class="desc">${esc(pd.motivo)}</div>${pd.sugerencia?`<div class="desc" style="color:var(--accent);font-weight:600">Sugerencia: ${esc(pd.sugerencia)}</div>`:''}</div></div>`; }).join('')}</div>`;
@@ -713,7 +728,7 @@ function busResumen(){
   });
   const NV = HOS.noVan || [];
   if (NV.length) html += `<h3>No van en el bus · ${NV.length}</h3><div class="list">${NV.map(([id,n,m])=>`<div class="novan" style="border-top:0"><span class="nm" style="flex:1"><b>${esc(n)}</b></span><span class="busb">NO va</span></div>`).join('')}</div>`;
-  if (none.length) html += `<h3>Sin bus registrado · ${none.length}</h3><div class="list"><table><tbody>${none.sort((x,y)=>x.n.localeCompare(y.n,'es')).map(p=>`<tr><td><b>${esc(p.n)}</b><div class="meta">${esc(p.h)}</div></td></tr>`).join('')}</tbody></table></div>`;
+
   return html;
 }
 
@@ -757,6 +772,7 @@ $app.addEventListener('click', e=>{
   if (ds.pid){ if (Date.now() - swBlockClick < 400) return; return toast('Desliza → para marcar · ← para quitar'); }
   if (ds.bmode) return go('bus/' + ds.bmode);
   if (ds.bf){ store.set('bus.f', ds.bf); return route(); }
+  if (ds.bfgo){ store.set('bus.f', ds.bfgo); store.set('bus.h',''); store.set('bus.q',''); return go('bus/lista'); }
   if ('bh' in ds){ store.set('bus.h', ds.bh); return route(); }
   if (ds.bact){
     const n = parseInt(myBus(), 10) || 0;
