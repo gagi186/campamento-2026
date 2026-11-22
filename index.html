@@ -398,7 +398,86 @@ function busPeople(){
 const myBus = () => store.get('bus.num', '');
 const recs = () => jget('bus.rec', {});      // {id: {b, t}} registrados en este celular
 const exts = () => jget('bus.ext', {});      // {id: b} importados de otros celulares
-function busOf(id, R, E){ R = R || recs(); E = E || exts(); return R[id] ? R[id].b : (E[id] || ''); }
+// ── sincronización entre celulares ──
+const SYNC = HOS.sync || null;
+const DEV = (()=>{ let d = store.get('bus.dev',''); if (!d){ d = Math.random().toString(36).slice(2,10); store.set('bus.dev', d); } return d; })();
+let RMAP = null;                                     // id -> {b, t} de otros celulares (lo más reciente)
+function remoteMap(){
+  if (RMAP) return RMAP;
+  const RM = jget('bus.remote', {}), out = {};
+  Object.entries(RM).forEach(([dev, snap])=>{
+    if (dev === DEV || !snap || !snap.r) return;
+    Object.entries(snap.r).forEach(([id, bt])=>{ const [b, t] = bt; if (!out[id] || t > out[id].t) out[id] = { b, t, dev }; });
+  });
+  return RMAP = out;
+}
+function busWho(id, R, E){
+  R = R || recs(); E = E || exts();
+  const L = R[id], M = remoteMap()[id];
+  if (L && (!M || L.t / 1000 >= M.t)) return { b: L.b, src: L.b ? 'local' : '' };
+  if (M) return { b: M.b, src: 'sync' };
+  if (E[id]) return { b: E[id], src: 'ext' };
+  return { b: '', src: '' };
+}
+function busOf(id, R, E){ return busWho(id, R, E).b; }
+let syncSt = { ok: null, at: 0, err: '' }, pubT = null;
+function busPublishSoon(){ if (!SYNC) return; clearTimeout(pubT); pubT = setTimeout(busPublish, 2500); }
+async function busPublish(){
+  if (!SYNC) return;
+  const R = recs(), r = {};
+  Object.entries(R).forEach(([id, x])=>{ if (!id.startsWith('x')) r[id] = [x.b, Math.round(x.t / 1000)]; });
+  const msg = JSON.stringify({ v: 1, d: DEV, r });
+  try {
+    const res = await fetch(`${SYNC.server}/${SYNC.topic}`, { method: 'POST', body: msg });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    store.set('bus.dirty', ''); syncSt.ok = true; syncSt.at = Date.now();
+  } catch(e){ store.set('bus.dirty', '1'); syncSt.ok = false; syncSt.err = 'sin conexión'; }
+  busSyncLine();
+}
+let pulling = false;
+async function busPull(){
+  if (!SYNC || pulling) return; pulling = true;
+  try {
+    const since = store.get('bus.since', '') || '12h';
+    const res = await fetch(`${SYNC.server}/${SYNC.topic}/json?poll=1&since=${encodeURIComponent(since)}`, { cache: 'no-store' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const lines = (await res.text()).split('\n').filter(Boolean);
+    const RM = jget('bus.remote', {}); let changed = false, last = '';
+    lines.forEach(l=>{
+      let ev; try { ev = JSON.parse(l); } catch(e){ return; }
+      if (ev.event !== 'message') return; last = ev.id;
+      let m; try { m = JSON.parse(ev.message); } catch(e){ return; }
+      if (!m || !m.d || !m.r || m.d === DEV) return;
+      if (RM[m.d] && RM[m.d].at > ev.time) return;
+      RM[m.d] = { at: ev.time, r: m.r }; changed = true;
+    });
+    if (last) store.set('bus.since', last);
+    if (changed){ jset('bus.remote', RM); RMAP = null; }
+    syncSt.ok = true; syncSt.at = Date.now();
+    if (store.get('bus.dirty','')) busPublish();
+    if (changed && (location.hash.slice(1).split('/')[0] === 'bus')){
+      if (location.hash.includes('resumen')) { const y = window.scrollY; route(); window.scrollTo(0, y); } else busRefresh();
+    }
+  } catch(e){ syncSt.ok = false; syncSt.err = 'sin conexión'; }
+  pulling = false; busSyncLine();
+}
+function busSyncLine(){
+  const el = document.getElementById('syncSt'); if (!el || !SYNC) return;
+  const devs = Object.keys(jget('bus.remote', {})).filter(d=>d !== DEV).length;
+  const ago = syncSt.at ? Math.max(0, Math.round((Date.now() - syncSt.at) / 1000)) : null;
+  el.innerHTML = syncSt.ok === false
+    ? `⚪ Sin internet: tus marcas se guardan y se enviarán al volver la señal.`
+    : syncSt.ok ? `🟢 Sincronizado${ago != null ? (ago < 5 ? ' ahora' : ' hace ' + (ago < 60 ? ago + ' s' : Math.round(ago/60) + ' min')) : ''} · ${devs + 1} celular${devs ? 'es' : ''} conectado${devs ? 's' : ''}`
+    : '⏳ Conectando…';
+}
+if (SYNC){
+  setInterval(()=>{ if (document.visibilityState === 'visible') busPull(); }, 10000);
+  setInterval(busSyncLine, 5000);
+  document.addEventListener('visibilitychange', ()=>{ if (document.visibilityState === 'visible') busPull(); });
+  window.addEventListener('online', ()=>{ busPublish(); busPull(); });
+  setTimeout(()=>{ busPull(); if (Object.keys(recs()).length) busPublish(); }, 800);
+  setInterval(()=>{ if (Object.keys(recs()).length) busPublish(); }, 20 * 60 * 1000);
+}
 let busAsk = null, busAskT = null;
 const busOpen = new Set();
 const PEND = HOS.pendientes || {};
@@ -413,6 +492,7 @@ function viewBus(sub){
   let html = `<h2>Bus de hospedaje · domingo</h2><p class="meta" style="margin-top:-6px">Solo para quienes se quedan en hostal el domingo (Los Lagos, Ixbalanque y Colibrí).</p>`;
   html += `<div class="card buscfg ${b?'':'unset'}"><div class="lbl">Este celular registra el bus<small>${b ? 'Cada palomita queda en el bus ' + esc(b) + '.' : 'Escribe el número de tu bus para empezar.'}</small></div>
     <div class="stepper"><button data-bact="minus" aria-label="Bus anterior">−</button><input id="busNum" inputmode="numeric" value="${esc(b)}" placeholder="#" maxlength="3" aria-label="Número de bus"><button data-bact="plus" aria-label="Bus siguiente">+</button></div></div>`;
+  if (SYNC) html += `<p class="meta" id="syncSt" style="margin:-4px 0 10px;font-size:.82rem">⏳ Conectando…</p>`;
   html += `<div class="stats" id="busStats"></div><div class="seg" id="busTot"></div>`;
   html += seg([['lista','Lista para checar'],['resumen','¿Quién va en cada bus?']], mode, 'bmode');
   if (mode === 'lista'){
@@ -435,7 +515,7 @@ function viewBus(sub){
 function busStats(){
   const P = busPeople(), R = recs(), E = exts(), b = myBus();
   const up = P.filter(p=>busOf(p.id,R,E)).length;
-  const mine = P.filter(p=>R[p.id] && R[p.id].b === b).length;
+  const mine = b ? P.filter(p=>busOf(p.id,R,E) === b).length : 0;
   const el = document.getElementById('busStats');
   const by = {}; P.forEach(p=>{ const pb = busOf(p.id,R,E); if (pb) by[pb] = (by[pb]||0) + 1; });
   const bl = Object.keys(by).sort((x,y)=>x.localeCompare(y,'es',{numeric:true}));
@@ -450,7 +530,7 @@ function busList(){
   const rows = P.filter(p=>{
     const pb = busOf(p.id,R,E);
     if (f === 'faltan' && pb) return false;
-    if (f === 'mio' && !(R[p.id] && R[p.id].b === b)) return false;
+    if (f === 'mio' && !(b && pb === b)) return false;
     if (f === 'pend' && !PEND[p.id]) return false;
     if (h && p.h !== h) return false;
     const nn = norm(p.n); return toks.every(t=>nn.includes(t));
@@ -460,7 +540,7 @@ function busList(){
   const nvHTML = nv.map(([id,n,m])=>`<div class="novan"><span class="nm" style="flex:1"><b>${esc(n)}</b><small class="muted" style="display:block;font-size:.8rem">${esc(m||'')}</small></span><span class="busb">NO va</span></div>`).join('');
   if (!rows.length){ el.innerHTML = `<div class="empty">${f==='faltan' && !toks.length ? '¡Ya subieron todos! 🎉' : 'Nadie en esta lista.'}</div>` + nvHTML; return; }
   el.innerHTML = rows.map(p=>{
-    const pb = busOf(p.id,R,E), here = R[p.id] && R[p.id].b === b;
+    const pb = busOf(p.id,R,E), here = !!b && pb === b;
     const cls = pb ? (here ? 'on' : 'other') : '', pd = PEND[p.id];
     return `<div class="sw"><div class="bg"><span>✓ Subió${b?' · bus '+esc(b):''}</span><span>Quitar ↩</span></div><button class="prow ${cls} ${pd?'pend':''} ${busAsk===p.id?'ask':''}" data-pid="${esc(p.id)}"><span class="box">${CHECK}</span>
       <span class="nm"><b>${esc(p.n)}</b><small>${esc(p.h)}${p.o?' · <i>'+esc(p.o)+'</i>':''}${busAsk===p.id?' · <i>Desliza otra vez → para pasarlo al bus '+esc(b)+'</i>':''}</small>
@@ -479,14 +559,14 @@ function busToggle(id){
     busAsk = id; clearTimeout(busAskT); busAskT = setTimeout(()=>{ busAsk = null; busList(); }, 4000);
     return busList();
   } else { R[id] = { b, t: Date.now() }; }
-  busAsk = null; jset('bus.rec', R); busRefresh();
+  busAsk = null; jset('bus.rec', R); busPublishSoon(); busRefresh();
 }
 function busSet(id, on){
   const b = myBus();
   if (!b){ toast('Primero escribe el número de tu bus arriba.'); return; }
   const R = recs(), E = exts();
   if (on){
-    if (R[id] && R[id].b === b) return;
+    if (busOf(id,R,E) === b) return;
     if (busOf(id,R,E) && busAsk !== id){
       busAsk = id; clearTimeout(busAskT); busAskT = setTimeout(()=>{ busAsk = null; busList(); }, 4000);
       toast('Ya está en el bus ' + busOf(id,R,E) + '. Desliza otra vez para pasarlo al bus ' + b + '.');
@@ -494,10 +574,10 @@ function busSet(id, on){
     }
     R[id] = { b, t: Date.now() };
   } else {
-    if (!R[id]){ if (E[id]) toast('Está registrado en el bus ' + E[id] + ' desde otro celular.'); return; }
-    delete R[id];
+    if (!busOf(id,R,E)) return;
+    R[id] = { b: '', t: Date.now() };   // quitado (se sincroniza a los demás celulares)
   }
-  busAsk = null; jset('bus.rec', R);
+  busAsk = null; jset('bus.rec', R); busPublishSoon();
   if (navigator.vibrate) try { navigator.vibrate(15); } catch(e){}
   busRefresh();
 }
@@ -536,7 +616,7 @@ function setBusNum(v){
 }
 function busShareText(){
   const R = recs(), P = busPeople(), by = {};
-  Object.entries(R).forEach(([id,r])=>{ const p = P.find(x=>x.id===id); if (p) (by[r.b] = by[r.b] || []).push({p, t:r.t}); });
+  Object.entries(R).forEach(([id,r])=>{ const p = P.find(x=>x.id===id); if (p && r.b) (by[r.b] = by[r.b] || []).push({p, t:r.t}); });
   const buses = Object.keys(by).sort((a,b)=>a.localeCompare(b,'es',{numeric:true}));
   if (!buses.length) return '';
   const hora = new Date().toLocaleTimeString('es-GT',{hour:'numeric',minute:'2-digit'});
@@ -595,7 +675,7 @@ function busAdd(){
 let busResetT = 0;
 function busReset(){
   if (Date.now() - busResetT > 4000){ busResetT = Date.now(); return toast('Toca otra vez para borrar todos los registros de este celular.'); }
-  ['bus.rec','bus.ext','bus.extra'].forEach(k=>store.set(k,'')); busResetT = 0; toast('Registros borrados.'); route();
+  ['bus.rec','bus.ext','bus.extra'].forEach(k=>store.set(k,'')); busResetT = 0; busPublish(); toast('Registros borrados.'); route();
 }
 function busTotals(){
   const P = busPeople(), R = recs(), E = exts(), by = {};
@@ -614,10 +694,10 @@ function busResumen(){
   P.forEach(p=>{
     const pb = busOf(p.id,R,E);
     if (!pb) none.push(p); else (by[pb] = by[pb] || []).push(p);
-    if (R[p.id] && E[p.id] && E[p.id] !== R[p.id].b) dup.push(`${p.n}: bus ${R[p.id].b} (aquí) y bus ${E[p.id]} (importado)`);
+    if (R[p.id] && R[p.id].b && E[p.id] && E[p.id] !== R[p.id].b) dup.push(`${p.n}: bus ${R[p.id].b} (aquí) y bus ${E[p.id]} (importado)`);
   });
   const buses = Object.keys(by).sort((a,b)=>a.localeCompare(b,'es',{numeric:true}));
-  let html = `<div class="card"><b>¿No ves los otros buses?</b><div class="meta" style="margin-top:4px">Los celulares no se pasan los datos solos. Pide al encargado de cada bus que toque <b>“Compartir lista de mi bus”</b> y te la mande por WhatsApp. Tú tocas el enlace del mensaje, o copias el mensaje y tocas aquí:</div><div class="actions" style="margin:10px 0 0"><button data-bact="paste">📋 Pegar e importar lista copiada</button></div></div>`;
+  let html = `<div class="card"><b>¿No ves algún bus?</b><div class="meta" style="margin-top:4px">Con internet, los buses se juntan solos cada pocos segundos. Si un celular no tiene señal, su encargado puede tocar <b>“Compartir lista de mi bus”</b> y mandártela por WhatsApp; tú copias el mensaje y tocas aquí:</div><div class="actions" style="margin:10px 0 0"><button data-bact="paste">📋 Pegar e importar lista copiada</button></div></div>`;
   html += busTotals();
   const pk = Object.keys(PEND).filter(id=>P.some(p=>p.id===id));
   if (pk.length) html += `<h3 style="color:var(--accent)">Pendientes · ${pk.length}</h3><div class="list">${pk.map(id=>{ const p = P.find(x=>x.id===id), pd = PEND[id], pb = busOf(id,R,E);
@@ -629,7 +709,7 @@ function busResumen(){
   if (!buses.length) html += `<div class="empty">Todavía no hay nadie registrado.</div>`;
   buses.forEach(bn=>{
     const L = by[bn].sort((x,y)=>x.n.localeCompare(y.n,'es'));
-    html += `<h3>Bus ${esc(bn)} · ${L.length}</h3><div class="list"><table><tbody>${L.map((p,i)=>`<tr><td class="num">${i+1}</td><td><b>${esc(p.n)}</b><div class="meta">${esc(p.h)}${R[p.id]?'':' · importado'}</div></td></tr>`).join('')}</tbody></table></div>`;
+    html += `<h3>Bus ${esc(bn)} · ${L.length}</h3><div class="list"><table><tbody>${L.map((p,i)=>`<tr><td class="num">${i+1}</td><td><b>${esc(p.n)}</b><div class="meta">${esc(p.h)}${({sync:' · otro celular', ext:' · importado'})[busWho(p.id,R,E).src] || ''}</div></td></tr>`).join('')}</tbody></table></div>`;
   });
   const NV = HOS.noVan || [];
   if (NV.length) html += `<h3>No van en el bus · ${NV.length}</h3><div class="list">${NV.map(([id,n,m])=>`<div class="novan" style="border-top:0"><span class="nm" style="flex:1"><b>${esc(n)}</b></span><span class="busb">NO va</span></div>`).join('')}</div>`;
@@ -651,7 +731,7 @@ function route(){
   document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('on', b.dataset.t === tab));
   if (tab === 'buscar'){ const i = document.getElementById('q'); runSearch(i.value); i.addEventListener('input', ()=>runSearch(i.value)); if (!i.value) i.focus(); }
   if (tab === 'bus'){
-    busRefresh();
+    busRefresh(); busSyncLine();
     const q = document.getElementById('busQ'); if (q) q.addEventListener('input', ()=>{ store.set('bus.q', q.value); busList(); });
     const bn = document.getElementById('busNum'); bn.addEventListener('change', ()=>setBusNum(bn.value));
     bn.addEventListener('keydown', e=>{ if (e.key === 'Enter') bn.blur(); });

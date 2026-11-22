@@ -244,6 +244,9 @@ window.DATA = {
   // Cada persona: [id, nombre, H/M, hostal, nota]. El id NO debe cambiar (se usa en los códigos que se comparten entre celulares).
   hospedaje: {
     hostales: ['Los Lagos', 'Ixbalanque', 'Colibrí', 'Pendiente'],
+    // Sincronización entre celulares (ntfy.sh). Solo se envían códigos (h01, m02…) y número de bus, nunca nombres.
+    // Si quiere empezar de cero con otro canal, cambie el texto del topic.
+    sync: { server: 'https://ntfy.sh', topic: 'camp26-bus-a1ad04604d11f5f1' },
     // Lugares libres en la hoja de hostales (Los Lagos: filas 12, 13 y 18 vacías).
     libres: { 'Los Lagos': 3 },
     // Pendientes: se ven en otro color con un "!" para leer el detalle y la sugerencia.
