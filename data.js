@@ -243,7 +243,19 @@ window.DATA = {
   // Fuente: "Solicitud de hospedaje - Domingo" (varones y mujeres) cruzada con "Hostales día domingo".
   // Cada persona: [id, nombre, H/M, hostal, nota]. El id NO debe cambiar (se usa en los códigos que se comparten entre celulares).
   hospedaje: {
-    hostales: ['Los Lagos', 'Ixbalanque', 'Colibrí', 'Sin hostal'],
+    hostales: ['Los Lagos', 'Ixbalanque', 'Colibrí', 'Pendiente'],
+    // Lugares libres en la hoja de hostales (Los Lagos: filas 12, 13 y 18 vacías).
+    libres: { 'Los Lagos': 3 },
+    // Pendientes: se ven en otro color con un "!" para leer el detalle y la sugerencia.
+    // Cuando se resuelva, borre la línea (y si cambia de hostal, corrija la persona arriba).
+    pendientes: {
+      h16: { motivo: 'Pidió hospedaje el domingo pero no aparece en ningún hostal. Falta confirmar si hay espacio en Colibrí.',
+             sugerencia: 'Preguntar en Colibrí si hay cama. Si no hay, Los Lagos tiene 3 lugares libres (filas 12, 13 y 18 de la hoja).' },
+      m90: { motivo: 'Está en Ixbalanque pero no venía en la solicitud de hospedaje.',
+             sugerencia: 'Confirmar que sí se queda el domingo y quién la registró.' },
+      m91: { motivo: 'Está en Ixbalanque pero no venía en la solicitud de hospedaje.',
+             sugerencia: 'Confirmar que sí se queda el domingo y quién la registró.' }
+    },
     personas: [
       // Hostal Los Lagos — varones
       ['h01', 'Abie Nuñez', 'H', 'Los Lagos'],
@@ -261,7 +273,7 @@ window.DATA = {
       // Hostal Los Lagos — mujeres
       ['m02', 'Raquel Morales', 'M', 'Los Lagos', 'Ayuda'],
       ['m14', 'Jael Sánchez Ramos', 'M', 'Los Lagos'],
-      ['m17', 'Amiel Cruz Pérez', 'M', 'Los Lagos', 'En la lista a mano no tenía Los Lagos'],
+      ['m17', 'Amiel Cruz Pérez', 'M', 'Los Lagos'],
       // Hostal Ixbalanque — mujeres
       ['m01', 'Eunice de Garache', 'M', 'Ixbalanque', 'Ayuda'],
       ['m03', 'Jazmín Aguilar', 'M', 'Ixbalanque'],
@@ -274,7 +286,7 @@ window.DATA = {
       ['m10', 'Sarah Yanet Martínez Alvarado', 'M', 'Ixbalanque'],
       ['m11', 'Mariana Ramírez Panamá', 'M', 'Ixbalanque'],
       ['m12', 'Abigail Ramírez Panamá', 'M', 'Ixbalanque'],
-      ['m13', 'Janet Melanie Pitalua Sánchez', 'M', 'Ixbalanque', 'En la lista a mano decía Los Lagos'],
+      ['m13', 'Janet Melanie Pitalua Sánchez', 'M', 'Ixbalanque'],
       ['m15', 'Angelly Mosel Garza Maldonado', 'M', 'Ixbalanque'],
       ['m16', 'Hannah Lizeth Martínez', 'M', 'Ixbalanque'],
       ['m18', 'Zurisaday González González', 'M', 'Ixbalanque'],
@@ -293,8 +305,8 @@ window.DATA = {
       ['m31', 'Leslie Dayanna Naula', 'M', 'Ixbalanque'],
       ['m32', 'Icela Jael Poveda', 'M', 'Ixbalanque'],
       ['m33', 'Cesia Abigail Villalobos', 'M', 'Ixbalanque'],
-      ['m90', 'Susana Angeles', 'M', 'Ixbalanque', 'No estaba en la solicitud'],
-      ['m91', 'Cory Carrasco', 'M', 'Ixbalanque', 'No estaba en la solicitud'],
+      ['m90', 'Susana Angeles', 'M', 'Ixbalanque'],
+      ['m91', 'Cory Carrasco', 'M', 'Ixbalanque'],
       // Hostal Colibrí — varones
       ['h02', 'Abner Abraham Maravilla', 'H', 'Colibrí'],
       ['h04', 'Alex Aguilar', 'H', 'Colibrí'],
@@ -317,8 +329,8 @@ window.DATA = {
       ['h30', 'Samuel Bordallo González', 'H', 'Colibrí'],
       ['h31', 'Samuel Josué López Castañeda', 'H', 'Colibrí'],
       ['h32', 'Saúl López', 'H', 'Colibrí'],
-      // Pidió hospedaje pero no aparece en ningún hostal
-      ['h16', 'Emmanuel Josmar Ángeles Acosta', 'H', 'Sin hostal', 'Pidió hospedaje y no aparece en ningún hostal']
+      // Pidió hospedaje pero todavía no tiene hostal
+      ['h16', 'Emmanuel Josmar Ángeles Acosta', 'H', 'Pendiente']
     ]
   }
 };
