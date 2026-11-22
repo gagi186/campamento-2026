@@ -6,7 +6,8 @@ App web instalable (PWA) para consultar el programa, el rally, comunión.com, lo
 - **Programa**: miércoles a domingo, con responsables y notas.
 - **Rally**: recorrido por equipo, tabla por ronda o por estación, y las plenarias del sábado.
 - **Comunión.com** y **Deportes** (jueves, viernes, sábado).
-- **Autobús**: lista de hospedaje del domingo con palomita para checar quién sube. Cada celular configura su número de bus; cada encargado comparte su lista por WhatsApp y otro celular la importa para ver quién va en cada bus.
+- **Hospedaje → Hostal**: por persona se marca si ya está hospedada (deslizando), se cambia de hostal y se pone la hora de salida; totales por hostal y lista por hora de salida. Se sincroniza igual que el bus.
+- **Hospedaje → Bus** (antes Autobús): lista de hospedaje del domingo con palomita para checar quién sube. Cada celular configura su número de bus; cada encargado comparte su lista por WhatsApp y otro celular la importa para ver quién va en cada bus.
 - **Buscar** (lupa): escribe un nombre y ves todo lo que le toca a esa persona.
 
 ## Publicarla

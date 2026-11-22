@@ -249,10 +249,12 @@ window.DATA = {
     sync: { server: 'https://ntfy.sh', topic: 'camp26-bus-a1ad04604d11f5f1' },
     // Lugares libres en la hoja de hostales (Los Lagos: filas 12, 13 y 18 vacías).
     libres: { 'Los Lagos': 3 },
+    // Camas por hostal (si se conoce). Sirve para calcular lugares libres en la sección Hostal.
+    capacidad: { 'Los Lagos': 18 },
     // Pendientes: se ven en otro color con un "!" para leer el detalle y la sugerencia.
     // Cuando se resuelva, borre la línea (y si cambia de hostal, corrija la persona arriba).
     pendientes: {
-      h16: { motivo: 'Pidió hospedaje el domingo pero no aparece en ningún hostal. Falta confirmar si hay espacio en Colibrí.',
+      h16: { siHostal: 'Pendiente', motivo: 'Pidió hospedaje el domingo pero no aparece en ningún hostal. Falta confirmar si hay espacio en Colibrí.',
              sugerencia: 'Preguntar en Colibrí si hay cama. Si no hay, Los Lagos tiene 3 lugares libres (filas 12, 13 y 18 de la hoja).' },
       m90: { motivo: 'Está en Ixbalanque pero no venía en la solicitud de hospedaje.',
              sugerencia: 'Confirmar que sí se queda el domingo y quién la registró.' },

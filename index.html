@@ -142,6 +142,17 @@ textarea.paste{width:100%;min-height:110px;font:inherit;font-size:.85rem;padding
 .sw .prow{position:relative;background:var(--card);border-bottom:0;touch-action:pan-y;user-select:none;-webkit-user-select:none}
 .sw .prow.anim{transition:transform .2s ease}
 .swhint{font-size:.8rem;color:var(--muted);margin:-4px 0 8px;text-align:center}
+.hw{border-bottom:1px solid var(--line)} .hw:last-child{border-bottom:0} .hw .sw{border-bottom:0}
+.hed{display:flex;flex-wrap:wrap;gap:8px;align-items:end;padding:4px 12px 12px 52px;background:var(--card)}
+.hed label{display:flex;flex-direction:column;gap:3px;font-size:.75rem;color:var(--muted);flex:1 1 130px}
+.hed select,.hed input{font:inherit;font-size:1rem;padding:9px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink)}
+.hed button{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:9px 12px;font-weight:600;cursor:pointer;color:var(--ink)}
+.hgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-bottom:12px}
+.hgrid button{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px;text-align:left;cursor:pointer;color:var(--ink)}
+.hgrid button.sel{border:2px solid var(--brand)}
+.hgrid b{display:block;font-size:.95rem}
+.hgrid .big{font-size:1.3rem;font-weight:700;color:var(--brand)}
+.hgrid small{display:block;color:var(--muted);font-size:.76rem}
 .novan{display:flex;align-items:center;gap:12px;padding:11px 12px;border-top:1px dashed var(--line);opacity:.75}
 .novan b{text-decoration:line-through;font-weight:600}
 .novan .busb{background:#f6dcda;color:#b3261e}
@@ -171,7 +182,7 @@ textarea.paste{width:100%;min-height:110px;font:inherit;font-size:.85rem;padding
   <button data-t="rally"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 21V4M5 4h12l-2 4 2 4H5"/></svg>Rally</button>
   <button data-t="com"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c1 3 4 4 4 8a4 4 0 0 1-8 0c0-2 1-3 2-4 0 2 1 3 2 3 0-3-1-5 0-7z"/><path d="M6 21h12"/></svg>Comunión</button>
   <button data-t="dep"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M3.5 9.5c4 1 13 1 17 0M3.5 14.5c4-1 13-1 17 0M12 3c-3 4-3 14 0 18M12 3c3 4 3 14 0 18"/></svg>Deportes</button>
-  <button data-t="bus"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="15" rx="3"/><path d="M4 11h16M8 18v3M16 18v3"/><circle cx="8" cy="14.5" r=".8"/><circle cx="16" cy="14.5" r=".8"/></svg>Autobús</button>
+  <button data-t="bus"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="15" rx="3"/><path d="M4 11h16M8 18v3M16 18v3"/><circle cx="8" cy="14.5" r=".8"/><circle cx="16" cy="14.5" r=".8"/></svg>Hospedaje</button>
 </nav>
 
 <script src="data.js"></script>
@@ -393,9 +404,9 @@ const jget = (k, d) => { try { return JSON.parse(store.get(k, '')) || d; } catch
 const jset = (k, v) => store.set(k, JSON.stringify(v));
 const CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5 9-10"/></svg>';
 function busPeople(){
-  const base = HOS.personas.map(([id,n,s,h,o])=>({id,n,s,h,o:o||''}));
-  const extra = jget('bus.extra', []).map(([id,n,h])=>({id,n,s:'',h:h||'Pendiente',o:'Agregado en este celular'}));
-  return base.concat(extra);
+  const base = HOS.personas.map(([id,n,s,h,o])=>({id,n,s,h,h0:h,o:o||''}));
+  const extra = jget('bus.extra', []).map(([id,n,h])=>({id,n,s:'',h:h||'Pendiente',h0:h||'Pendiente',o:'Agregado en este celular'}));
+  return base.concat(extra).map(p=>{ const x = hosWho(p.id); if (x && x.h) p.h = x.h; return p; });
 }
 const myBus = () => store.get('bus.num', '');
 const recs = () => jget('bus.rec', {});      // {id: {b, t}} registrados en este celular
@@ -444,28 +455,67 @@ async function busPull(){
     const res = await fetch(`${SYNC.server}/${SYNC.topic}/json?poll=1&since=${encodeURIComponent(since)}`, { cache: 'no-store' });
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const lines = (await res.text()).split('\n').filter(Boolean);
-    const RM = jget('bus.remote', {}); let changed = false, last = '';
+    const RM = jget('bus.remote', {}), HM = jget('hos.remote', {}); let changed = false, hchanged = false, last = '';
     lines.forEach(l=>{
       let ev; try { ev = JSON.parse(l); } catch(e){ return; }
       if (ev.event !== 'message') return; last = ev.id;
       let m; try { m = JSON.parse(ev.message); } catch(e){ return; }
       if (!m || !m.d || !m.r || m.d === DEV) return;
+      if (m.k === 'h'){ if (HM[m.d] && HM[m.d].at > ev.time) return; HM[m.d] = { at: ev.time, r: m.r }; hchanged = true; return; }
       if (RM[m.d] && RM[m.d].at > ev.time) return;
       RM[m.d] = { at: ev.time, r: m.r }; changed = true;
     });
     if (last) store.set('bus.since', last);
     if (changed){ jset('bus.remote', RM); RMAP = null; }
+    if (hchanged){ jset('hos.remote', HM); HMAP = null; changed = true; }
     syncSt.ok = true; syncSt.at = Date.now();
     if (store.get('bus.dirty','')) busPublish();
+    if (store.get('hos.dirty','')) hosPublish();
     if (changed && (location.hash.slice(1).split('/')[0] === 'bus')){
-      if (location.hash.includes('resumen')) { const y = window.scrollY; route(); window.scrollTo(0, y); } else busRefresh();
+      if (location.hash.includes('hostal')) hosRefresh();
+      else if (location.hash.includes('resumen')) { const y = window.scrollY; route(); window.scrollTo(0, y); } else busRefresh();
     }
   } catch(e){ syncSt.ok = false; syncSt.err = 'sin conexión'; }
   pulling = false; busSyncLine();
 }
+// ── hostal: dónde se queda, si ya llegó y a qué hora sale ──
+const hrecs = () => jget('hos.rec', {});         // {id: {h, in, sal, t}}
+let HMAP = null;
+function hosRemote(){
+  if (HMAP) return HMAP;
+  const RM = jget('hos.remote', {}), out = {};
+  Object.entries(RM).forEach(([dev, snap])=>{
+    if (dev === DEV || !snap || !snap.r) return;
+    Object.entries(snap.r).forEach(([id, a])=>{ const [h, i, sal, t] = a; if (!out[id] || t > out[id].t) out[id] = { h, in: i, sal, t }; });
+  });
+  return HMAP = out;
+}
+function hosWho(id){
+  const L = jget('hos.rec', {})[id], M = hosRemote()[id];
+  if (L && (!M || L.t / 1000 >= M.t)) return L;
+  return M || null;
+}
+function hosUpdate(id, patch){
+  const H = hrecs(), cur = hosWho(id) || {};
+  H[id] = { h: cur.h || '', in: cur.in || 0, sal: cur.sal || '', ...patch, t: Date.now() };
+  jset('hos.rec', H); hosPublishSoon();
+}
+let hpubT = null;
+function hosPublishSoon(){ if (!SYNC) return; clearTimeout(hpubT); hpubT = setTimeout(hosPublish, 2000); }
+async function hosPublish(){
+  if (!SYNC) return;
+  const H = hrecs(), r = {};
+  Object.entries(H).forEach(([id, x])=>{ if (!id.startsWith('x')) r[id] = [x.h || '', x.in || 0, x.sal || '', Math.round(x.t / 1000)]; });
+  try {
+    const res = await fetch(`${SYNC.server}/${SYNC.topic}`, { method: 'POST', body: JSON.stringify({ v: 1, k: 'h', d: DEV, r }) });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    store.set('hos.dirty', ''); syncSt.ok = true; syncSt.at = Date.now();
+  } catch(e){ store.set('hos.dirty', '1'); syncSt.ok = false; }
+  busSyncLine();
+}
 function busSyncLine(){
   const el = document.getElementById('syncSt'); if (!el || !SYNC) return;
-  const devs = Object.keys(jget('bus.remote', {})).filter(d=>d !== DEV).length;
+  const devs = [...new Set(Object.keys(jget('bus.remote', {})).concat(Object.keys(jget('hos.remote', {}))))].filter(d=>d !== DEV).length;
   const ago = syncSt.at ? Math.max(0, Math.round((Date.now() - syncSt.at) / 1000)) : null;
   el.innerHTML = syncSt.ok === false
     ? `⚪ Sin internet: tus marcas se guardan y se enviarán al volver la señal.`
@@ -476,22 +526,29 @@ if (SYNC){
   setInterval(()=>{ if (document.visibilityState === 'visible') busPull(); }, 10000);
   setInterval(busSyncLine, 5000);
   document.addEventListener('visibilitychange', ()=>{ if (document.visibilityState === 'visible') busPull(); });
-  window.addEventListener('online', ()=>{ busPublish(); busPull(); });
-  setTimeout(()=>{ busPull(); if (Object.keys(recs()).length) busPublish(); }, 800);
-  setInterval(()=>{ if (Object.keys(recs()).length) busPublish(); }, 20 * 60 * 1000);
+  window.addEventListener('online', ()=>{ busPublish(); hosPublish(); busPull(); });
+  setTimeout(()=>{ busPull(); if (Object.keys(recs()).length) busPublish(); if (Object.keys(hrecs()).length) hosPublish(); }, 800);
+  setInterval(()=>{ if (Object.keys(recs()).length) busPublish(); if (Object.keys(hrecs()).length) hosPublish(); }, 20 * 60 * 1000);
 }
 let busAsk = null, busAskT = null;
 const busOpen = new Set();
-const PEND = HOS.pendientes || {};
+const PEND0 = HOS.pendientes || {};
+const PEND = new Proxy({}, {
+  get(_, id){ const pd = PEND0[id]; if (!pd) return undefined; if (pd.siHostal){ const x = hosWho(id); if (x && x.h && x.h !== pd.siHostal) return undefined; } return pd; },
+  ownKeys(){ return Object.keys(PEND0).filter(id=>{ const pd = PEND0[id]; if (!pd.siHostal) return true; const x = hosWho(id); return !(x && x.h && x.h !== pd.siHostal); }); },
+  getOwnPropertyDescriptor(_, id){ return { enumerable: true, configurable: true }; }
+});
 
 function toast(msg){
   const t = document.createElement('div'); t.className = 'toast'; t.textContent = msg;
   document.body.appendChild(t); setTimeout(()=>t.remove(), 2600);
 }
 function viewBus(sub){
+  if (sub === 'hostal') return viewHostal();
   const mode = sub === 'resumen' ? 'resumen' : 'lista';
   const b = myBus();
-  let html = `<h2>Bus de hospedaje · domingo</h2><p class="meta" style="margin-top:-6px">Solo para quienes se quedan en hostal el domingo (Los Lagos, Ixbalanque y Colibrí).</p>`;
+  let html = seg([['lista','🚌 Bus'],['hostal','🏠 Hostal']], 'lista', 'bmode');
+  html += `<h2>Bus de hospedaje · domingo</h2><p class="meta" style="margin-top:-6px">Solo para quienes se quedan en hostal el domingo (Los Lagos, Ixbalanque y Colibrí).</p>`;
   html += `<div class="card buscfg ${b?'':'unset'}"><div class="lbl">Este celular registra el bus<small>${b ? 'Cada palomita queda en el bus ' + esc(b) + '.' : 'Escribe el número de tu bus para empezar.'}</small></div>
     <div class="stepper"><button data-bact="minus" aria-label="Bus anterior">−</button><input id="busNum" inputmode="numeric" value="${esc(b)}" placeholder="#" maxlength="3" aria-label="Número de bus"><button data-bact="plus" aria-label="Bus siguiente">+</button></div></div>`;
   if (SYNC) html += `<p class="meta" id="syncSt" style="margin:-4px 0 10px;font-size:.82rem">⏳ Conectando…</p>`;
@@ -513,6 +570,74 @@ function viewBus(sub){
     html += busResumen();
   }
   return html;
+}
+const fmtHora = hm => { if (!hm) return ''; const [h, m] = hm.split(':').map(Number); const d = new Date(); d.setHours(h, m || 0, 0, 0); return d.toLocaleTimeString('es-GT', { hour: 'numeric', minute: '2-digit' }); };
+const hosOpen = new Set();
+function viewHostal(){
+  let html = seg([['lista','🚌 Bus'],['hostal','🏠 Hostal']], 'hostal', 'bmode');
+  html += `<h2>Hostales · domingo</h2><p class="meta" style="margin-top:-6px">Desliza → cuando la persona ya está hospedada. Toca el nombre para cambiar de hostal o poner a qué hora sale.</p>`;
+  if (SYNC) html += `<p class="meta" id="syncSt" style="margin:-4px 0 10px;font-size:.82rem">⏳ Conectando…</p>`;
+  html += `<div class="hgrid" id="hosTot"></div>`;
+  const f = store.get('hos.f', 'falta');
+  html += seg([['falta','Sin llegar'],['in','Hospedados'],['todos','Todos'],['sal','Por hora de salida']], f, 'hf');
+  const h = store.get('hos.h', '');
+  html += `<div class="seg">${[['','Todos los hostales']].concat(HOS.hostales.map(x=>[x,x])).map(([k,l])=>`<button data-hh="${esc(k)}" class="${k===h?'on':''}">${esc(l)}</button>`).join('')}</div>`;
+  html += `<div class="search"><input id="hosQ" type="search" placeholder="Buscar nombre" value="${esc(store.get('hos.q',''))}" autocomplete="off"></div>`;
+  html += `<p class="swhint">Desliza a la derecha → hospedado · a la izquierda ← quitar</p><div class="list" id="hosList"></div>`;
+  return html;
+}
+function hosTotals(){
+  const el = document.getElementById('hosTot'); if (!el) return;
+  const P = busPeople(), cap = HOS.capacidad || {}, sel = store.get('hos.h','');
+  el.innerHTML = HOS.hostales.map(h=>{
+    const L = P.filter(p=>p.h===h); if (!L.length && h === 'Pendiente') return '';
+    const inn = L.filter(p=>(hosWho(p.id)||{}).in).length;
+    const lib = cap[h] != null ? `<small>${Math.max(0, cap[h] - L.length)} lugares libres de ${cap[h]}</small>` : '';
+    return `<button data-hh="${esc(h)}" class="${h===sel?'sel':''}"><b>${esc(h)}</b><span class="big">${inn}/${L.length}</span><small>hospedados · faltan ${L.length - inn}</small>${lib}</button>`;
+  }).join('');
+}
+function hosList(){
+  const el = document.getElementById('hosList'); if (!el) return;
+  const P = busPeople(), f = store.get('hos.f','falta'), h = store.get('hos.h',''), toks = norm(store.get('hos.q','')).split(' ').filter(Boolean);
+  let rows = P.filter(p=>{
+    const x = hosWho(p.id) || {};
+    if (f === 'falta' && x.in) return false;
+    if (f === 'in' && !x.in) return false;
+    if (h && p.h !== h) return false;
+    const nn = norm(p.n); return toks.every(t=>nn.includes(t));
+  });
+  const salOf = p => (hosWho(p.id) || {}).sal || '';
+  if (f === 'sal') rows.sort((a,b)=>(salOf(a)||'99').localeCompare(salOf(b)||'99') || a.n.localeCompare(b.n,'es'));
+  else rows.sort((a,b)=>a.n.localeCompare(b.n,'es'));
+  if (!rows.length){ el.innerHTML = `<div class="empty">${f==='falta' && !toks.length ? '¡Ya están todos hospedados! 🎉' : 'Nadie en esta lista.'}</div>`; return; }
+  let lastSal = null;
+  el.innerHTML = rows.map(p=>{
+    const x = hosWho(p.id) || {}, pd = PEND[p.id], open = hosOpen.has(p.id);
+    let head = '';
+    if (f === 'sal' && x.sal !== lastSal){ lastSal = x.sal; head = `<div class="item" style="grid-template-columns:1fr;padding:8px 12px;background:var(--soft2)"><b>${x.sal ? 'Sale ' + esc(fmtHora(x.sal)) : 'Sin hora de salida'}</b></div>`; }
+    const moved = p.h !== p.h0 ? ` · <i>antes: ${esc(p.h0)}</i>` : '';
+    const inTxt = x.in ? ` · llegó ${esc(new Date(x.in).toLocaleTimeString('es-GT',{hour:'numeric',minute:'2-digit'}))}` : '';
+    return head + `<div class="hw"><div class="sw"><div class="bg"><span>✓ Hospedado</span><span>Quitar ↩</span></div><button class="prow ${x.in?'on':''} ${pd?'pend':''}" data-hid="${esc(p.id)}"><span class="box">${CHECK}</span>
+      <span class="nm"><b>${esc(p.n)}</b><small>${esc(p.h)}${moved}${inTxt}</small>
+      ${pd && busOpen.has(p.id)?`<span class="pdet">${esc(pd.motivo)}${pd.sugerencia?`<em>Sugerencia: ${esc(pd.sugerencia)}</em>`:''}</span>`:''}</span>
+      ${x.sal?`<span class="busb">Sale ${esc(fmtHora(x.sal))}</span>`:''}
+      ${pd?`<span class="info" data-info="${esc(p.id)}" role="button" aria-label="Ver detalle">!</span>`:''}</button></div>
+      ${open?`<div class="hed"><label>Hostal<select data-hsel="${esc(p.id)}">${HOS.hostales.map(o=>`<option ${o===p.h?'selected':''}>${esc(o)}</option>`).join('')}</select></label>
+        <label>Hora de salida<input type="time" data-hsal="${esc(p.id)}" value="${esc(x.sal||'')}"></label>
+        ${x.sal?`<button data-hclr="${esc(p.id)}">Quitar hora</button>`:''}<button data-hok="${esc(p.id)}">Listo</button></div>`:''}</div>`;
+  }).join('');
+}
+function hosRefresh(){
+  const a = document.activeElement;
+  if (a && a.closest && a.closest('.hed')) return;   // no estorbar mientras se edita
+  hosTotals(); hosList(); busSyncLine();
+}
+function hosSetIn(id, on){
+  const x = hosWho(id) || {};
+  if (on && x.in) return; if (!on && !x.in) return;
+  hosUpdate(id, { in: on ? Date.now() : 0 });
+  if (navigator.vibrate) try { navigator.vibrate(15); } catch(e){}
+  hosRefresh();
 }
 function busStats(){
   const P = busPeople(), R = recs(), E = exts(), b = myBus();
@@ -589,7 +714,7 @@ function busSet(id, on){
 let SW = null, swBlockClick = 0;
 $app.addEventListener('pointerdown', e=>{
   const row = e.target.closest('.sw .prow'); if (!row || e.target.closest('[data-info]')) return;
-  SW = { row, wrap: row.parentNode, id: row.dataset.pid, x: e.clientX, y: e.clientY, dx: 0, lock: null, pid: e.pointerId };
+  SW = { row, wrap: row.parentNode, id: row.dataset.pid || row.dataset.hid, hos: !!row.dataset.hid, x: e.clientX, y: e.clientY, dx: 0, lock: null, pid: e.pointerId };
   row.classList.remove('anim');
 });
 $app.addEventListener('pointermove', e=>{
@@ -602,14 +727,15 @@ $app.addEventListener('pointermove', e=>{
 });
 function swEnd(e){
   if (!SW || (e && e.pointerId !== SW.pid)) return;
-  const { row, wrap, id, dx, lock } = SW; SW = null;
+  const { row, wrap, id, dx, lock, hos } = SW; SW = null;
   if (lock !== 'h') return;
   swBlockClick = Date.now();
   const lim = Math.min(90, row.offsetWidth * 0.28);
   row.classList.add('anim'); row.style.transform = '';
   setTimeout(()=>{ wrap.classList.remove('r','l'); }, 200);
-  if (dx > lim) setTimeout(()=>busSet(id, true), 180);
-  else if (dx < -lim) setTimeout(()=>busSet(id, false), 180);
+  const set = hos ? hosSetIn : busSet;
+  if (dx > lim) setTimeout(()=>set(id, true), 180);
+  else if (dx < -lim) setTimeout(()=>set(id, false), 180);
 }
 $app.addEventListener('pointerup', swEnd);
 $app.addEventListener('pointercancel', swEnd);
@@ -745,11 +871,14 @@ function route(){
   $app.innerHTML = fn(sub);
   document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('on', b.dataset.t === tab));
   if (tab === 'buscar'){ const i = document.getElementById('q'); runSearch(i.value); i.addEventListener('input', ()=>runSearch(i.value)); if (!i.value) i.focus(); }
-  if (tab === 'bus'){
+  if (tab === 'bus' && sub === 'hostal'){
+    hosRefresh();
+    const q = document.getElementById('hosQ'); if (q) q.addEventListener('input', ()=>{ store.set('hos.q', q.value); hosList(); });
+  } else if (tab === 'bus'){
     busRefresh(); busSyncLine();
     const q = document.getElementById('busQ'); if (q) q.addEventListener('input', ()=>{ store.set('bus.q', q.value); busList(); });
-    const bn = document.getElementById('busNum'); bn.addEventListener('change', ()=>setBusNum(bn.value));
-    bn.addEventListener('keydown', e=>{ if (e.key === 'Enter') bn.blur(); });
+    const bn = document.getElementById('busNum'); if (bn){ bn.addEventListener('change', ()=>setBusNum(bn.value));
+    bn.addEventListener('keydown', e=>{ if (e.key === 'Enter') bn.blur(); }); }
   }
   showInstall();
 }
@@ -757,9 +886,14 @@ function go(h){ if (location.hash.slice(1) === h) route(); else location.hash = 
 
 document.getElementById('tabs').addEventListener('click', e=>{ const b = e.target.closest('button'); if (b) go(b.dataset.t); });
 document.getElementById('btnSearch').addEventListener('click', ()=>go('buscar'));
+$app.addEventListener('change', e=>{
+  const t = e.target;
+  if (t.dataset.hsel){ hosUpdate(t.dataset.hsel, { h: t.value }); hosTotals(); return hosList(); }
+  if (t.dataset.hsal != null && t.dataset.hsal !== undefined && t.matches('[data-hsal]')){ hosUpdate(t.dataset.hsal, { sal: t.value }); }
+});
 $app.addEventListener('click', e=>{
   const inf = e.target.closest('[data-info]');
-  if (inf){ const id = inf.dataset.info; busOpen.has(id) ? busOpen.delete(id) : busOpen.add(id); return busList(); }
+  if (inf){ const id = inf.dataset.info; busOpen.has(id) ? busOpen.delete(id) : busOpen.add(id); busList(); return hosList(); }
   const b = e.target.closest('button'); if (!b) return;
   const ds = b.dataset;
   if (ds.go) return go(ds.go);
@@ -769,6 +903,11 @@ $app.addEventListener('click', e=>{
   if (ds.team){ store.set('team', ds.team === store.get('team','') ? '' : ds.team); return route(); }
   if (ds.ronda){ store.set('ronda', ds.ronda); return route(); }
   if (ds.est){ store.set('estacion', ds.est); return route(); }
+  if (ds.hid){ if (Date.now() - swBlockClick < 400) return; hosOpen.has(ds.hid) ? hosOpen.delete(ds.hid) : hosOpen.add(ds.hid); return hosList(); }
+  if (ds.hok){ hosOpen.delete(ds.hok); return hosList(); }
+  if (ds.hclr){ hosUpdate(ds.hclr, { sal: '' }); return hosList(); }
+  if (ds.hf){ store.set('hos.f', ds.hf); return route(); }
+  if ('hh' in ds){ store.set('hos.h', store.get('hos.h','') === ds.hh && b.closest('.hgrid') ? '' : ds.hh); return route(); }
   if (ds.pid){ if (Date.now() - swBlockClick < 400) return; return toast('Desliza → para marcar · ← para quitar'); }
   if (ds.bmode) return go('bus/' + ds.bmode);
   if (ds.bf){ store.set('bus.f', ds.bf); return route(); }
