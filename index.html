@@ -131,6 +131,15 @@ textarea.paste{width:100%;min-height:110px;font:inherit;font-size:.85rem;padding
 .formrow{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
 .formrow input,.formrow select{flex:1 1 140px;font:inherit;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink)}
 .formrow button{border:0;border-radius:10px;padding:10px 14px;font-weight:600;background:var(--brand);color:var(--brand-ink);cursor:pointer}
+.sw{position:relative;overflow:hidden;border-bottom:1px solid var(--line)}
+.sw:last-child{border-bottom:0}
+.sw .bg{position:absolute;inset:0;display:flex;justify-content:space-between;align-items:center;padding:0 18px;font-weight:700;font-size:.9rem;color:#fff}
+.sw .bg span{opacity:0}
+.sw.r .bg{background:var(--brand)} .sw.r .bg span:first-child{opacity:1}
+.sw.l .bg{background:#b3261e} .sw.l .bg span:last-child{opacity:1}
+.sw .prow{position:relative;background:var(--card);border-bottom:0;touch-action:pan-y;user-select:none;-webkit-user-select:none}
+.sw .prow.anim{transition:transform .2s ease}
+.swhint{font-size:.8rem;color:var(--muted);margin:-4px 0 8px;text-align:center}
 .prow.pend{background:var(--soft2);box-shadow:inset 4px 0 0 var(--accent)}
 .prow .info{flex:0 0 auto;width:30px;height:30px;border-radius:999px;background:var(--accent);color:#fff;font-weight:800;display:grid;place-items:center;font-size:1rem}
 .prow .pdet{display:block;margin-top:6px;font-size:.84rem;color:var(--ink);line-height:1.35}
@@ -410,7 +419,7 @@ function viewBus(sub){
     html += seg([['faltan','Faltan'],['mio','En mi bus'],['todos','Todos']].concat(np?[['pend','Pendientes ('+np+')']]:[]), f, 'bf');
     html += `<div class="seg">${[['','Todos los hostales']].concat(HOS.hostales.map(x=>[x,x])).map(([k,l])=>`<button data-bh="${esc(k)}" class="${k===h?'on':''}">${esc(l)}</button>`).join('')}</div>`;
     html += `<div class="search"><input id="busQ" type="search" placeholder="Buscar nombre" value="${esc(store.get('bus.q',''))}" autocomplete="off"></div>`;
-    html += `<div class="list" id="busList"></div>`;
+    html += `<p class="swhint">Desliza a la derecha → subió · a la izquierda ← quitar</p><div class="list" id="busList"></div>`;
     html += `<div class="actions"><button data-bact="share">Compartir lista de mi bus</button></div>`;
     html += `<details class="card"><summary>Importar lista de otro bus</summary><p class="meta">Pega aquí el mensaje que te compartieron desde otro celular. Así verás en esta app quién va en cada bus.</p><textarea class="paste" id="busPaste" placeholder="Pega el mensaje completo (incluye la línea que empieza con #B)"></textarea><div class="formrow"><button data-bact="import">Importar</button></div></details>`;
     html += `<details class="card"><summary>Agregar persona que no está en la lista</summary><div class="formrow"><input id="newName" placeholder="Nombre completo"><select id="newHos">${HOS.hostales.map(x=>`<option>${esc(x)}</option>`).join('')}</select><button data-bact="add">Agregar</button></div></details>`;
@@ -443,11 +452,11 @@ function busList(){
   el.innerHTML = rows.map(p=>{
     const pb = busOf(p.id,R,E), here = R[p.id] && R[p.id].b === b;
     const cls = pb ? (here ? 'on' : 'other') : '', pd = PEND[p.id];
-    return `<button class="prow ${cls} ${pd?'pend':''} ${busAsk===p.id?'ask':''}" data-pid="${esc(p.id)}"><span class="box">${CHECK}</span>
+    return `<div class="sw"><div class="bg"><span>✓ Subió${b?' · bus '+esc(b):''}</span><span>Quitar ↩</span></div><button class="prow ${cls} ${pd?'pend':''} ${busAsk===p.id?'ask':''}" data-pid="${esc(p.id)}"><span class="box">${CHECK}</span>
       <span class="nm"><b>${esc(p.n)}</b><small>${esc(p.h)}${p.o?' · <i>'+esc(p.o)+'</i>':''}${busAsk===p.id?' · <i>Toca otra vez para pasarlo al bus '+esc(b)+'</i>':''}</small>
       ${pd && busOpen.has(p.id)?`<span class="pdet">${esc(pd.motivo)}${pd.sugerencia?`<em>Sugerencia: ${esc(pd.sugerencia)}</em>`:''}</span>`:''}</span>
       ${pb?`<span class="busb ${here?'':'other'}">Bus ${esc(pb)}</span>`:''}
-      ${pd?`<span class="info" data-info="${esc(p.id)}" role="button" aria-label="Ver detalle">!</span>`:''}</button>`;
+      ${pd?`<span class="info" data-info="${esc(p.id)}" role="button" aria-label="Ver detalle">!</span>`:''}</button></div>`;
   }).join('');
 }
 function busRefresh(){ busStats(); busList(); }
@@ -462,6 +471,55 @@ function busToggle(id){
   } else { R[id] = { b, t: Date.now() }; }
   busAsk = null; jset('bus.rec', R); busRefresh();
 }
+function busSet(id, on){
+  const b = myBus();
+  if (!b){ toast('Primero escribe el número de tu bus arriba.'); return; }
+  const R = recs(), E = exts();
+  if (on){
+    if (R[id] && R[id].b === b) return;
+    if (busOf(id,R,E) && busAsk !== id){
+      busAsk = id; clearTimeout(busAskT); busAskT = setTimeout(()=>{ busAsk = null; busList(); }, 4000);
+      toast('Ya está en el bus ' + busOf(id,R,E) + '. Desliza otra vez para pasarlo al bus ' + b + '.');
+      return busList();
+    }
+    R[id] = { b, t: Date.now() };
+  } else {
+    if (!R[id]){ if (E[id]) toast('Está registrado en el bus ' + E[id] + ' desde otro celular.'); return; }
+    delete R[id];
+  }
+  busAsk = null; jset('bus.rec', R);
+  if (navigator.vibrate) try { navigator.vibrate(15); } catch(e){}
+  busRefresh();
+}
+// deslizar: derecha = subió, izquierda = quitar
+let SW = null, swBlockClick = 0;
+$app.addEventListener('pointerdown', e=>{
+  const row = e.target.closest('.sw .prow'); if (!row || e.target.closest('[data-info]')) return;
+  SW = { row, wrap: row.parentNode, id: row.dataset.pid, x: e.clientX, y: e.clientY, dx: 0, lock: null, pid: e.pointerId };
+  row.classList.remove('anim');
+});
+$app.addEventListener('pointermove', e=>{
+  if (!SW || e.pointerId !== SW.pid) return;
+  const dx = e.clientX - SW.x, dy = e.clientY - SW.y;
+  if (!SW.lock){ if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return; SW.lock = Math.abs(dx) > Math.abs(dy) ? 'h' : 'v'; if (SW.lock === 'h') try { SW.row.setPointerCapture(e.pointerId); } catch(_){} }
+  if (SW.lock !== 'h') return;
+  SW.dx = dx; SW.row.style.transform = `translateX(${dx}px)`;
+  SW.wrap.classList.toggle('r', dx > 0); SW.wrap.classList.toggle('l', dx < 0);
+});
+function swEnd(e){
+  if (!SW || (e && e.pointerId !== SW.pid)) return;
+  const { row, wrap, id, dx, lock } = SW; SW = null;
+  if (lock !== 'h') return;
+  swBlockClick = Date.now();
+  const lim = Math.min(90, row.offsetWidth * 0.28);
+  row.classList.add('anim'); row.style.transform = '';
+  setTimeout(()=>{ wrap.classList.remove('r','l'); }, 200);
+  if (dx > lim) setTimeout(()=>busSet(id, true), 180);
+  else if (dx < -lim) setTimeout(()=>busSet(id, false), 180);
+}
+$app.addEventListener('pointerup', swEnd);
+$app.addEventListener('pointercancel', swEnd);
+
 function setBusNum(v){
   v = String(v).replace(/[^0-9a-zA-Z]/g,'').slice(0,3);
   store.set('bus.num', v); route();
@@ -568,7 +626,7 @@ $app.addEventListener('click', e=>{
   if (ds.team){ store.set('team', ds.team === store.get('team','') ? '' : ds.team); return route(); }
   if (ds.ronda){ store.set('ronda', ds.ronda); return route(); }
   if (ds.est){ store.set('estacion', ds.est); return route(); }
-  if (ds.pid) return busToggle(ds.pid);
+  if (ds.pid){ if (Date.now() - swBlockClick < 400) return; return busToggle(ds.pid); }
   if (ds.bmode) return go('bus/' + ds.bmode);
   if (ds.bf){ store.set('bus.f', ds.bf); return route(); }
   if ('bh' in ds){ store.set('bus.h', ds.bh); return route(); }
