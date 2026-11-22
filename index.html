@@ -140,6 +140,9 @@ textarea.paste{width:100%;min-height:110px;font:inherit;font-size:.85rem;padding
 .sw .prow{position:relative;background:var(--card);border-bottom:0;touch-action:pan-y;user-select:none;-webkit-user-select:none}
 .sw .prow.anim{transition:transform .2s ease}
 .swhint{font-size:.8rem;color:var(--muted);margin:-4px 0 8px;text-align:center}
+.novan{display:flex;align-items:center;gap:12px;padding:11px 12px;border-top:1px dashed var(--line);opacity:.75}
+.novan b{text-decoration:line-through;font-weight:600}
+.novan .busb{background:#f6dcda;color:#b3261e}
 .prow.pend{background:var(--soft2);box-shadow:inset 4px 0 0 var(--accent)}
 .prow .info{flex:0 0 auto;width:30px;height:30px;border-radius:999px;background:var(--accent);color:#fff;font-weight:800;display:grid;place-items:center;font-size:1rem}
 .prow .pdet{display:block;margin-top:6px;font-size:.84rem;color:var(--ink);line-height:1.35}
@@ -448,7 +451,10 @@ function busList(){
     if (h && p.h !== h) return false;
     const nn = norm(p.n); return toks.every(t=>nn.includes(t));
   }).sort((x,y)=>x.n.localeCompare(y.n,'es'));
-  if (!rows.length){ el.innerHTML = `<div class="empty">${f==='faltan' && !toks.length ? '¡Ya subieron todos! 🎉' : 'Nadie en esta lista.'}</div>`; return; }
+
+  const nv = (HOS.noVan || []).filter(([id,n])=>(!h) && f !== 'mio' && f !== 'pend' && toks.every(t=>norm(n).includes(t)));
+  const nvHTML = nv.map(([id,n,m])=>`<div class="novan"><span class="nm" style="flex:1"><b>${esc(n)}</b><small class="muted" style="display:block;font-size:.8rem">${esc(m||'')}</small></span><span class="busb">NO va</span></div>`).join('');
+  if (!rows.length){ el.innerHTML = `<div class="empty">${f==='faltan' && !toks.length ? '¡Ya subieron todos! 🎉' : 'Nadie en esta lista.'}</div>` + nvHTML; return; }
   el.innerHTML = rows.map(p=>{
     const pb = busOf(p.id,R,E), here = R[p.id] && R[p.id].b === b;
     const cls = pb ? (here ? 'on' : 'other') : '', pd = PEND[p.id];
@@ -457,7 +463,7 @@ function busList(){
       ${pd && busOpen.has(p.id)?`<span class="pdet">${esc(pd.motivo)}${pd.sugerencia?`<em>Sugerencia: ${esc(pd.sugerencia)}</em>`:''}</span>`:''}</span>
       ${pb?`<span class="busb ${here?'':'other'}">Bus ${esc(pb)}</span>`:''}
       ${pd?`<span class="info" data-info="${esc(p.id)}" role="button" aria-label="Ver detalle">!</span>`:''}</button></div>`;
-  }).join('');
+  }).join('') + nvHTML;
 }
 function busRefresh(){ busStats(); busList(); }
 function busToggle(id){
@@ -590,6 +596,8 @@ function busResumen(){
     const L = by[bn].sort((x,y)=>x.n.localeCompare(y.n,'es'));
     html += `<h3>Bus ${esc(bn)} · ${L.length}</h3><div class="list"><table><tbody>${L.map((p,i)=>`<tr><td class="num">${i+1}</td><td><b>${esc(p.n)}</b><div class="meta">${esc(p.h)}${R[p.id]?'':' · importado'}</div></td></tr>`).join('')}</tbody></table></div>`;
   });
+  const NV = HOS.noVan || [];
+  if (NV.length) html += `<h3>No van en el bus · ${NV.length}</h3><div class="list">${NV.map(([id,n,m])=>`<div class="novan" style="border-top:0"><span class="nm" style="flex:1"><b>${esc(n)}</b></span><span class="busb">NO va</span></div>`).join('')}</div>`;
   if (none.length) html += `<h3>Sin bus registrado · ${none.length}</h3><div class="list"><table><tbody>${none.sort((x,y)=>x.n.localeCompare(y.n,'es')).map(p=>`<tr><td><b>${esc(p.n)}</b><div class="meta">${esc(p.h)}</div></td></tr>`).join('')}</tbody></table></div>`;
   return html;
 }
