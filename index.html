@@ -413,7 +413,7 @@ function viewBus(sub){
   let html = `<h2>Bus de hospedaje · domingo</h2><p class="meta" style="margin-top:-6px">Solo para quienes se quedan en hostal el domingo (Los Lagos, Ixbalanque y Colibrí).</p>`;
   html += `<div class="card buscfg ${b?'':'unset'}"><div class="lbl">Este celular registra el bus<small>${b ? 'Cada palomita queda en el bus ' + esc(b) + '.' : 'Escribe el número de tu bus para empezar.'}</small></div>
     <div class="stepper"><button data-bact="minus" aria-label="Bus anterior">−</button><input id="busNum" inputmode="numeric" value="${esc(b)}" placeholder="#" maxlength="3" aria-label="Número de bus"><button data-bact="plus" aria-label="Bus siguiente">+</button></div></div>`;
-  html += `<div class="stats" id="busStats"></div>`;
+  html += `<div class="stats" id="busStats"></div><div class="seg" id="busTot"></div>`;
   html += seg([['lista','Lista para checar'],['resumen','¿Quién va en cada bus?']], mode, 'bmode');
   if (mode === 'lista'){
     const f = store.get('bus.f', 'faltan'), h = store.get('bus.h', '');
@@ -437,6 +437,10 @@ function busStats(){
   const up = P.filter(p=>busOf(p.id,R,E)).length;
   const mine = P.filter(p=>R[p.id] && R[p.id].b === b).length;
   const el = document.getElementById('busStats');
+  const by = {}; P.forEach(p=>{ const pb = busOf(p.id,R,E); if (pb) by[pb] = (by[pb]||0) + 1; });
+  const bl = Object.keys(by).sort((x,y)=>x.localeCompare(y,'es',{numeric:true}));
+  const tb = document.getElementById('busTot');
+  if (tb) tb.innerHTML = bl.length ? bl.map(bn=>`<button data-bmode="resumen" class="${bn===b?'on':''}">Bus ${esc(bn)}: <b>${by[bn]}</b></button>`).join('') + `<button data-bmode="resumen">Sin bus: <b>${P.length-up}</b></button>` : '';
   if (el) el.innerHTML = `<div><b>${b?mine:'–'}</b><span>En mi bus${b?' ('+esc(b)+')':''}</span></div><div><b>${up}/${P.length}</b><span>Ya subieron</span></div><div class="${P.length-up?'warn':''}"><b>${P.length-up}</b><span>Faltan</span></div>`;
 }
 function busList(){
@@ -575,6 +579,18 @@ function busReset(){
   if (Date.now() - busResetT > 4000){ busResetT = Date.now(); return toast('Toca otra vez para borrar todos los registros de este celular.'); }
   ['bus.rec','bus.ext','bus.extra'].forEach(k=>store.set(k,'')); busResetT = 0; toast('Registros borrados.'); route();
 }
+function busTotals(){
+  const P = busPeople(), R = recs(), E = exts(), by = {};
+  let sin = 0;
+  P.forEach(p=>{ const pb = busOf(p.id,R,E); if (!pb){ sin++; return; }
+    const t = by[pb] = by[pb] || { n:0, H:0, M:0, hs:{} };
+    t.n++; if (p.s === 'H' || p.s === 'M') t[p.s]++; t.hs[p.h] = (t.hs[p.h]||0) + 1; });
+  const buses = Object.keys(by).sort((a,b)=>a.localeCompare(b,'es',{numeric:true}));
+  const up = P.length - sin, b = myBus();
+  return `<h3>Totales por bus</h3><div class="list"><table><thead><tr><th>Bus</th><th>Total</th><th>H</th><th>M</th></tr></thead><tbody>${
+    buses.map(bn=>{ const t = by[bn]; return `<tr class="${bn===b?'mine':''}"><td class="num">Bus ${esc(bn)}</td><td><b>${t.n}</b><div class="meta" style="font-size:.75rem">${Object.entries(t.hs).map(([h,n])=>esc(h)+' '+n).join(' · ')}</div></td><td>${t.H}</td><td>${t.M}</td></tr>`; }).join('')
+    }<tr><td class="num" style="color:var(--accent)">Sin bus</td><td><b style="color:var(--accent)">${sin}</b></td><td></td><td></td></tr><tr><td class="num">Total</td><td><b>${up}/${P.length}</b> subieron</td><td></td><td></td></tr></tbody></table></div>`;
+}
 function busResumen(){
   const P = busPeople(), R = recs(), E = exts(), by = {}, none = [], dup = [];
   P.forEach(p=>{
@@ -583,7 +599,7 @@ function busResumen(){
     if (R[p.id] && E[p.id] && E[p.id] !== R[p.id].b) dup.push(`${p.n}: bus ${R[p.id].b} (aquí) y bus ${E[p.id]} (importado)`);
   });
   const buses = Object.keys(by).sort((a,b)=>a.localeCompare(b,'es',{numeric:true}));
-  let html = '';
+  let html = busTotals();
   const pk = Object.keys(PEND).filter(id=>P.some(p=>p.id===id));
   if (pk.length) html += `<h3 style="color:var(--accent)">Pendientes · ${pk.length}</h3><div class="list">${pk.map(id=>{ const p = P.find(x=>x.id===id), pd = PEND[id], pb = busOf(id,R,E);
     return `<div class="item" style="grid-template-columns:1fr;background:var(--soft2);box-shadow:inset 4px 0 0 var(--accent)"><div><div class="act">⚠ ${esc(p.n)}${pb?` <span class="busb">Bus ${esc(pb)}</span>`:''}</div><div class="meta">${esc(p.h)}</div><div class="desc">${esc(pd.motivo)}</div>${pd.sugerencia?`<div class="desc" style="color:var(--accent);font-weight:600">Sugerencia: ${esc(pd.sugerencia)}</div>`:''}</div></div>`; }).join('')}</div>`;
