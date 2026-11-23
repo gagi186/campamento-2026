@@ -584,6 +584,7 @@ function viewHostal(){
   html += `<div class="seg">${[['','Todos los hostales']].concat(HOS.hostales.map(x=>[x,x])).map(([k,l])=>`<button data-hh="${esc(k)}" class="${k===h?'on':''}">${esc(l)}</button>`).join('')}</div>`;
   html += `<div class="search"><input id="hosQ" type="search" placeholder="Buscar nombre" value="${esc(store.get('hos.q',''))}" autocomplete="off"></div>`;
   html += `<p class="swhint">Desliza a la derecha → hospedado · a la izquierda ← quitar</p><div class="list" id="hosList"></div>`;
+  html += `<div class="actions"><button class="sec" data-bact="backup">💾 Guardar respaldo (Excel)</button></div><p class="meta" style="text-align:center;font-size:.78rem">Guarda o manda por WhatsApp un archivo con todo: hostal, hospedado, horas y bus.</p>`;
   return html;
 }
 function hosTotals(){
@@ -626,6 +627,26 @@ function hosList(){
         <label>Hora de salida<input type="time" data-hsal="${esc(p.id)}" value="${esc(x.sal||'')}"></label>
         ${x.sal?`<button data-hclr="${esc(p.id)}">Quitar hora</button>`:''}<button data-hok="${esc(p.id)}">Listo</button></div>`:''}</div>`;
   }).join('');
+}
+function hosCSV(){
+  const P = busPeople().sort((a,b)=>a.n.localeCompare(b.n,'es'));
+  const q = v => '"' + String(v == null ? '' : v).replace(/"/g,'""') + '"';
+  const hora = t => t ? new Date(t).toLocaleTimeString('es-GT',{hour:'numeric',minute:'2-digit'}) : '';
+  const rows = [['Nombre','Hostal','Hostal original','Hospedado','Hora de llegada','Hora de salida','Bus','Pendiente']];
+  P.forEach(p=>{ const x = hosWho(p.id) || {}, pd = PEND[p.id];
+    rows.push([p.n, p.h, p.h0 || p.h, x.in ? 'Sí' : 'No', hora(x.in), fmtHora(x.sal), busOf(p.id), pd ? pd.motivo : '']); });
+  (HOS.noVan || []).forEach(([id,n,m])=>rows.push([n,'','','','','','NO va', m||'']));
+  return '﻿' + rows.map(r=>r.map(q).join(',')).join('\r\n');
+}
+async function hosBackup(){
+  const d = new Date(), stamp = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0') + '_' + String(d.getHours()).padStart(2,'0') + String(d.getMinutes()).padStart(2,'0');
+  const name = `hospedaje_${stamp}.csv`, blob = new Blob([hosCSV()], { type: 'text/csv' });
+  try {
+    const file = new File([blob], name, { type: 'text/csv' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })){ await navigator.share({ files: [file], title: 'Respaldo hospedaje' }); return; }
+  } catch(e){ if (e && e.name === 'AbortError') return; }
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); a.remove();
+  toast('Respaldo descargado: ' + name);
 }
 function hosRefresh(){
   const a = document.activeElement;
@@ -829,6 +850,7 @@ function busResumen(){
   const buses = Object.keys(by).sort((a,b)=>a.localeCompare(b,'es',{numeric:true}));
   let html = `<div class="card"><b>¿No ves algún bus?</b><div class="meta" style="margin-top:4px">Con internet, los buses se juntan solos cada pocos segundos. Si un celular no tiene señal, su encargado puede tocar <b>“Compartir lista de mi bus”</b> y mandártela por WhatsApp; tú copias el mensaje y tocas aquí:</div><div class="actions" style="margin:10px 0 0"><button data-bact="paste">📋 Pegar e importar lista copiada</button></div></div>`;
   html += busTotals();
+  html += `<div class="actions"><button class="sec" data-bact="backup">💾 Guardar respaldo (Excel)</button></div>`;
   {
     const P = busPeople(), R = recs(), E = exts();
     const fal = P.filter(p=>!busOf(p.id,R,E));
@@ -920,6 +942,7 @@ $app.addEventListener('click', e=>{
     if (ds.bact === 'share') return busShare();
     if (ds.bact === 'import') return busImport();
     if (ds.bact === 'paste') return busPasteImport();
+    if (ds.bact === 'backup') return hosBackup();
     if (ds.bact === 'add') return busAdd();
     if (ds.bact === 'reset') return busReset();
   }
